@@ -123,7 +123,7 @@ def save_checkpoint(run_dir: Path,attempt_id: str,state: CheckpointState) -> Pat
             with (temporary/'state.pt').open('xb') as stream:
                 torch.save({'optimizer':state.optimizer,'scheduler':state.scheduler,'scaler':state.scaler,'rng':state.rng},stream)
                 stream.flush(); os.fsync(stream.fileno())
-            metadata = {**state.metadata,'schema_version':1,'identity':state.identity.as_dict(),
+            metadata = {**state.metadata,'schema_version':1,'run_id':Path(run_dir).name,'identity':state.identity.as_dict(),
                         'progress':state.progress.as_dict(),'permutation':state.permutation,
                         'adapter_sha256':sha256_file(temporary/'adapter.safetensors')}
             write_json_atomic(temporary/'metadata.json',metadata)

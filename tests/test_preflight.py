@@ -1,0 +1,29 @@
+from dataclasses import replace
+import pytest
+
+
+def test_missing_assets_fail_preflight_with_report_instead_of_silent_fallback(local_config,tmp_path):
+    from asr.preflight import run_preflight
+    from asr.paths import read_json
+    output=tmp_path/'preflight.json'
+    report=run_preflight(local_config,'cpu',output)
+    assert report.passed is False
+    assert read_json(output)['passed'] is False
+    assert {'dataset','snapshot','noise'}.issubset({c['name'] for c in report.checks if not c['passed']})
+
+
+def test_stale_identity_missing_reports_and_fake_gpu_evidence_are_rejected():
+    from test_checkpoint import identity_fixture
+    from asr.contracts import PreflightReport,SmokeReport,RuntimeProfile
+    from asr.preflight import validate_evidence
+    expected=identity_fixture(); runtime=RuntimeProfile('cuda','bfloat16',False,{'metrics':{'targets':192,'trainable_parameters':3932160}})
+    checks=[{'name':n,'passed':True} for n in ['dataset','snapshot','noise','dependencies','labels']]
+    cpu=PreflightReport('cpu',True,replace(expected,runtime_hash=''),checks,execution='cpu')
+    gpu=PreflightReport('gpu',True,expected,checks+[{'name':'allocation','passed':True},{'name':'gpu_probe','passed':True}],runtime,execution='slurm_gpu')
+    smoke_checks=[{'name':n,'passed':True} for n in ['training_windows','checkpoint_resume','gradient_connectivity','maximum_shape']]
+    smoke=SmokeReport(True,expected,runtime,['s/current'],smoke_checks,execution='slurm_gpu')
+    validate_evidence(expected,[cpu,gpu],smoke)
+    with pytest.raises(ValueError): validate_evidence(expected,[cpu],smoke)
+    with pytest.raises(ValueError,match='identity'):
+        validate_evidence(expected,[cpu,gpu],replace(smoke,identity=replace(expected,manifest_hash='stale')))
+    with pytest.raises(ValueError): validate_evidence(expected,[cpu,replace(gpu,execution='fixture')],smoke)

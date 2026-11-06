@@ -31,21 +31,26 @@ def prepare_features(audio: np.ndarray, feature_extractor) -> dict:
     return {'input_features':features.float(),'attention_mask':mask}
 
 
-def prepare_example(row, audio: np.ndarray, processor) -> PreparedExample:
+def tokenize_labels(row, tokenizer):
     reference = unicodedata.normalize('NFC',row.reference).strip()
     if not reference:
         raise ValueError(f'{row.utterance_id}: empty transcript')
-    processor.tokenizer.set_prefix_tokens(language='vi',task='transcribe',predict_timestamps=False)
-    ids = list(processor.tokenizer(reference, truncation=False)['input_ids'])
-    start = processor.tokenizer.convert_tokens_to_ids('<|startoftranscript|>')
+    tokenizer.set_prefix_tokens(language='vi',task='transcribe',predict_timestamps=False)
+    ids = list(tokenizer(reference, truncation=False)['input_ids'])
+    start = tokenizer.convert_tokens_to_ids('<|startoftranscript|>')
     if ids and ids[0] == start:
         ids = ids[1:]
     if not ids or len(ids) > 447:
         raise ValueError(f'{row.utterance_id}: labels exceed 447 tokens or are empty')
-    if ids[-1] != processor.tokenizer.eos_token_id:
+    if ids[-1] != tokenizer.eos_token_id:
         raise ValueError(f'{row.utterance_id}: missing label EOS')
+    return torch.tensor([ids],dtype=torch.long)
+
+
+def prepare_example(row, audio: np.ndarray, processor) -> PreparedExample:
+    labels = tokenize_labels(row,processor.tokenizer)
     features = prepare_features(audio,processor.feature_extractor)
-    return PreparedExample(**features, labels=torch.tensor([ids],dtype=torch.long),utterance_id=row.utterance_id)
+    return PreparedExample(**features, labels=labels,utterance_id=row.utterance_id)
 
 
 def collate_examples(examples: list[PreparedExample]) -> dict:

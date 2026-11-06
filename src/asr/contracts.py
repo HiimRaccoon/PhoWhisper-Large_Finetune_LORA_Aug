@@ -154,3 +154,44 @@ class ArtifactIdentity:
     def identity_hash(self) -> str:
         from .config import canonical_hash
         return canonical_hash(self.as_dict())
+
+
+class ReportRecord:
+    def as_dict(self) -> dict:
+        return {'schema_version':1,**asdict(self)}
+
+    @classmethod
+    def from_dict(cls,value):
+        raw = dict(value)
+        if raw.pop('schema_version',None) != 1:
+            raise ValueError('unsupported report schema')
+        try:
+            if raw.get('identity') is not None:
+                raw['identity'] = ArtifactIdentity(**raw['identity'])
+            if raw.get('runtime') is not None:
+                raw['runtime'] = RuntimeProfile(**raw['runtime'])
+            return cls(**raw)
+        except (TypeError,KeyError) as exc:
+            raise ValueError('invalid report structure') from exc
+
+
+@dataclass
+class PreflightReport(ReportRecord):
+    stage: str
+    passed: bool
+    identity: ArtifactIdentity | None
+    checks: list[dict]
+    runtime: RuntimeProfile | None = None
+    execution: str = 'cpu'
+    metadata: dict = field(default_factory=dict)
+
+
+@dataclass
+class SmokeReport(ReportRecord):
+    passed: bool
+    identity: ArtifactIdentity
+    runtime: RuntimeProfile
+    fixture_ids: list[str]
+    checks: list[dict]
+    execution: str = 'unverified'
+    metadata: dict = field(default_factory=dict)

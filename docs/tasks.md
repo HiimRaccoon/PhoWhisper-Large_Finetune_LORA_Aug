@@ -112,11 +112,11 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Files:** `src/asr/{artifacts,logging,preflight,cli,training,__main__}.py` and `tests/{test_artifacts,test_logging,test_preflight,test_run_loop,test_cli}.py`.  
 **Verify:** `pytest tests/test_artifacts.py tests/test_logging.py tests/test_preflight.py tests/test_cli.py tests/test_run_loop.py -q`.
 
-- [ ] T08.1 Implement/test run identity, unique attempts, ownership and allowed lifecycle transitions; record duplicate/conflicting-write rejection and immutable prior artifacts.
-- [ ] T08.2 Implement/test all required training/augmentation JSONL fields and fallback summaries; record parseable fixture logs with attributable actual LR/progress/failure events.
-- [ ] T08.3 Implement/test CPU/GPU preflight and identity-bound admission by composing existing validators; stale/missing/tampered reports and fabricated GPU success must fail before training.
-- [ ] T08.4 Implement/test `execute_run` over 10 tiny-model epochs, resume cursors, stop-at-window behavior and update-50/epoch/terminal checkpoint triggers; record complete visitation and terminal adapter linkage.
-- [ ] T08.5 Wire audit/preflight/train/resume and nonzero diagnostic exits; pass the integration suite and prove no CLI training path bypasses admission or confuses fresh initialization with resume; commit when applicable.
+- [x] T08.1 Implement/test run identity, unique attempts, ownership and allowed lifecycle transitions; record duplicate/conflicting-write rejection and immutable prior artifacts.
+- [x] T08.2 Implement/test all required training/augmentation JSONL fields and fallback summaries; record parseable fixture logs with attributable actual LR/progress/failure events.
+- [x] T08.3 Implement/test CPU/GPU preflight and identity-bound admission by composing existing validators; stale/missing/tampered reports and fabricated GPU success must fail before training.
+- [x] T08.4 Implement/test `execute_run` over 10 tiny-model epochs, resume cursors, stop-at-window behavior and update-50/epoch/terminal checkpoint triggers; record complete visitation and terminal adapter linkage.
+- [x] T08.5 Wire audit/preflight/train/resume and nonzero diagnostic exits; pass the integration suite and prove no CLI training path bypasses admission or confuses fresh initialization with resume; commit when applicable.
 
 ### T09 — Isolated full-model smoke
 
@@ -236,5 +236,6 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 | T05 | complete | RED model/precision modules absent; GREEN 7 task tests; full suite 45 passed, 2 deselected. Real tiny Whisper+PEFT forwards/backwards prove encoder/decoder gradients and frozen base; meta-device full topology proves 192 exact targets. Real H200 counts/kernel/memory remain pending T13. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T06 | complete | RED training/schedule modules absent; GREEN 13 task tests, full suite 58 passed, 2 deselected. Exact LR boundaries and resumed traces, 16/12 mean-loss gradients, LR-zero AdamW moments, real CPU GradScaler success, scaler-skip/nonfinite/OOM guards verified. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T07 | complete | RED checkpoint module absent; GREEN 5 checkpoint/resume tests. Full suite 64 passed, 2 deselected. Immutable atomic publication, rename interruption, writer exclusion, hashes, safe tensor-only state loading, RNG-last and optimizer/scheduler/cursor restore verified. Regression RED/GREEN also prevents outputs inside a local source-dataset root. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T08 | complete | RED artifacts/logging/preflight/loop/CLI seams absent; GREEN 10 task tests; full suite 74 passed, 2 deselected. Tiny-model 10-epoch traversal, combined interval/terminal events, mid-epoch resume, logging totals, stale evidence rejection and CLI GPU-allocation admission verified. Actual Linux/GPU checks pending. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.
