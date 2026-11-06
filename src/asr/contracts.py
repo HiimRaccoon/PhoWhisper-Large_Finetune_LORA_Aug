@@ -204,3 +204,13 @@ class ExportResult(ReportRecord):
     identity: ArtifactIdentity
     files: dict[str, str]
     metadata: dict = field(default_factory=dict)
+
+
+@dataclass
+class OutputValidation(ReportRecord):
+    valid: bool
+    utterance_count: int
+    source_count: int
+    identity: ArtifactIdentity
+    files: dict[str, str]
+    errors: list[str] = field(default_factory=list)

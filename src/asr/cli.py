@@ -31,6 +31,15 @@ def _parser():
     export=commands.add_parser('merge-export'); _common(export)
     export.add_argument('--checkpoint',type=Path,required=True)
     export.add_argument('--output',type=Path,required=True)
+    for name in ['infer-train','validate-output']:
+        inference=commands.add_parser(name); _common(inference)
+        inference.add_argument('--model',type=Path,required=True)
+        inference.add_argument('--manifest',type=Path,required=True)
+        if name=='infer-train':
+            inference.add_argument('--output',type=Path,required=True)
+        else:
+            inference.add_argument('--utterances',type=Path,required=True)
+            inference.add_argument('--sources',type=Path,required=True)
     for name in ['train','resume']:
         run=commands.add_parser(name); _common(run)
         run.add_argument('--run-id',required=True)
@@ -108,6 +117,20 @@ def main(argv=None):
             from .export import export_final
             result=export_final(config,args.checkpoint,args.output)
             print(json.dumps({'valid':result.valid,'path':str(result.path)}))
+            return 0 if result.valid else 1
+        if args.command in {'infer-train','validate-output'}:
+            from .export import load_export
+            exported=load_export(project_path(config,args.model))
+            manifest=project_path(config,args.manifest)
+            if sha256_file(manifest)!=exported.identity.manifest_hash or config.method_hash!=exported.identity.method_hash:
+                raise ValueError('output manifest/config identity mismatch')
+            if args.command=='infer-train':
+                from .inference import transcribe_train
+                result=transcribe_train(config,manifest,exported,args.output)
+            else:
+                from .outputs import validate_outputs
+                result=validate_outputs(manifest,project_path(config,args.utterances),project_path(config,args.sources),exported)
+            print(json.dumps(result.as_dict()))
             return 0 if result.valid else 1
         if args.command=='smoke':
             from .audit import audit_train

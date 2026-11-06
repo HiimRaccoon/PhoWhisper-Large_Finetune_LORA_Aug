@@ -147,11 +147,11 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Files:** `src/asr/{inference,outputs,cli}.py`, `tests/{test_inference,test_inference_resume,test_outputs}.py`.  
 **Verify:** `pytest tests/test_inference.py tests/test_inference_resume.py tests/test_outputs.py -q`; actual filesystem locking is verified in T13.1.
 
-- [ ] T11.1 Implement/test offline eval/inference-mode greedy generation and mask forwarding, preserving all locked settings and raw token/EOS-limit evidence; record resolved-generation assertions.
-- [ ] T11.2 Implement/test a one-writer ordered JSONL prefix journal bound to model/config/manifest/generation identities; crash-injection tests cover newline/fsync interruptions, trailing fragments, corrupt/duplicate/out-of-order records, mismatches and repeated restart without duplicate committed output.
-- [ ] T11.3 Implement/test original-order grouping for current and user-history turns, including empty/interleaved histories; record exact expected source records using the unchanged output schema.
-- [ ] T11.4 Test completeness before publication and interruption between candidate validation, public file installs and the final completion report; require matching hashes/identities, no missing/extra/empty/incomplete predictions and no reference fallback.
-- [ ] T11.5 Wire compatible continuation into repeated `infer-train`, integrate `validate-output` and publish `transcripts_complete` only after valid completion evidence; save CPU suite results and commit when applicable.
+- [x] T11.1 Implement/test offline eval/inference-mode greedy generation and mask forwarding, preserving all locked settings and raw token/EOS-limit evidence; record resolved-generation assertions.
+- [x] T11.2 Implement/test a one-writer ordered JSONL prefix journal bound to model/config/manifest/generation identities; crash-injection tests cover newline/fsync interruptions, trailing fragments, corrupt/duplicate/out-of-order records, mismatches and repeated restart without duplicate committed output.
+- [x] T11.3 Implement/test original-order grouping for current and user-history turns, including empty/interleaved histories; record exact expected source records using the unchanged output schema.
+- [x] T11.4 Test completeness before publication and interruption between candidate validation, public file installs and the final completion report; require matching hashes/identities, no missing/extra/empty/incomplete predictions and no reference fallback.
+- [x] T11.5 Wire compatible continuation into repeated `infer-train`, integrate `validate-output` and publish `transcripts_complete` only after valid completion evidence; save CPU suite results and commit when applicable.
 
 ### T12 — Setup, Slurm scripts and README
 
@@ -239,5 +239,6 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 | T08 | complete | RED artifacts/logging/preflight/loop/CLI seams absent; GREEN 10 task tests; full suite 74 passed, 2 deselected. Tiny-model 10-epoch traversal, combined interval/terminal events, mid-epoch resume, logging totals, stale evidence rejection and CLI GPU-allocation admission verified. Actual Linux/GPU checks pending. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T09 | complete | RED smoke harness/gradient evidence/CLI route; GREEN portable three-window 16,16,12 continuation test with real optimizer/RNG state, tiny Whisper gradient-evidence test, and allocation refusal. Full suite 78 passed, 3 deselected. Actual full-model GPU test exists and remains pending T13/G3; no passing GPU SmokeReport fabricated. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T10 | complete | RED missing export/CLI observed; GREEN 86 CPU tests, 4 hardware/Linux deselected. Terminal 3150/50360 guards and real tiny Whisper FP32 merge, FP16 fresh-process offline reload passed at atol=rtol=0.05. Final model remains T14/G5 pending. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T11 | complete | RED output validation, generation, journal and CLI seams observed; GREEN portable suite 111 tests, hardware/Linux excluded. Original-index grouping; greedy prefix/EOS verified with real tiny Whisper; locked generation; journal identity/corruption/torn-tail/fsync interruption, writer exclusion and interrupted no-overwrite publication covered. Actual POSIX process/filesystem tests remain T13.1. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.
