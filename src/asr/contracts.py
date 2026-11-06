@@ -134,3 +134,23 @@ class TrainingProgress:
 
     def as_dict(self) -> dict:
         return asdict(self)
+
+
+@dataclass(frozen=True)
+class ArtifactIdentity:
+    method_hash: str
+    dataset_hash: str
+    manifest_hash: str
+    snapshot_hash: str
+    noise_hash: str
+    runtime_hash: str
+    dependency_hash: str
+    base_revision: str = 'b9136a44b5f2ca664bd0b8f74baecf1715f6eeeb'
+
+    def as_dict(self) -> dict:
+        return asdict(self)
+
+    @property
+    def identity_hash(self) -> str:
+        from .config import canonical_hash
+        return canonical_hash(self.as_dict())

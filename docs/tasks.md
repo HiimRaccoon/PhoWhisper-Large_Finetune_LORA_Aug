@@ -101,10 +101,10 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Files:** `src/asr/checkpoint.py`, `tests/{test_checkpoint,test_resume}.py`.  
 **Verify:** `pytest tests/test_checkpoint.py tests/test_resume.py -q`; actual POSIX/filesystem tests also feed G1.linux/T13.1.
 
-- [ ] T07.1 Test/implement atomic publication and writer exclusion with interrupted writes, collisions and concurrent attempts; record that incomplete checkpoints are never resumable.
-- [ ] T07.2 Round-trip adapter/optimizer/scheduler/scaler/RNG/permutation/progress and terminal identity; reject pending gradients or `pending_micro_steps != 0` and save field/hash comparisons.
-- [ ] T07.3 Validate every protected identity before continuation, reconstruct objects then restore RNG last, and assert the exact next LR/cursor; record mismatch and RNG diagnostics.
-- [ ] T07.4 Compare uninterrupted/resumed sample IDs, augmentation, LR, adapter/optimizer state and budget across mid-epoch, partial/epoch boundaries, warmup and final-call restore; record passing suite/traces and commit when applicable.
+- [x] T07.1 Test/implement atomic publication and writer exclusion with interrupted writes, collisions and concurrent attempts; record that incomplete checkpoints are never resumable.
+- [x] T07.2 Round-trip adapter/optimizer/scheduler/scaler/RNG/permutation/progress and terminal identity; reject pending gradients or `pending_micro_steps != 0` and save field/hash comparisons.
+- [x] T07.3 Validate every protected identity before continuation, reconstruct objects then restore RNG last, and assert the exact next LR/cursor; record mismatch and RNG diagnostics.
+- [x] T07.4 Compare uninterrupted/resumed sample IDs, augmentation, LR, adapter/optimizer state and budget across mid-epoch, partial/epoch boundaries, warmup and final-call restore; record passing suite/traces and commit when applicable.
 
 ### T08 — Lifecycle, admission, logs and CLI
 
@@ -235,5 +235,6 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 | T04 | complete | RED augmentation module absent; GREEN 9 deterministic/speed/volume/noise/fallback tests. Full suite 38 passed, 2 deselected. Golden seed and zero-waveform fixture independently derived; exact gate draw order tested through RNG boundary fixtures. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T05 | complete | RED model/precision modules absent; GREEN 7 task tests; full suite 45 passed, 2 deselected. Real tiny Whisper+PEFT forwards/backwards prove encoder/decoder gradients and frozen base; meta-device full topology proves 192 exact targets. Real H200 counts/kernel/memory remain pending T13. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T06 | complete | RED training/schedule modules absent; GREEN 13 task tests, full suite 58 passed, 2 deselected. Exact LR boundaries and resumed traces, 16/12 mean-loss gradients, LR-zero AdamW moments, real CPU GradScaler success, scaler-skip/nonfinite/OOM guards verified. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T07 | complete | RED checkpoint module absent; GREEN 5 checkpoint/resume tests. Full suite 64 passed, 2 deselected. Immutable atomic publication, rename interruption, writer exclusion, hashes, safe tensor-only state loading, RNG-last and optimizer/scheduler/cursor restore verified. Regression RED/GREEN also prevents outputs inside a local source-dataset root. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.

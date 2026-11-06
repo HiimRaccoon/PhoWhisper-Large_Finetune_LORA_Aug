@@ -30,6 +30,8 @@ def project_path(config, path: Path) -> Path:
     candidate = path.resolve() if path.is_absolute() else (root / path).resolve()
     if not candidate.is_relative_to(root) or _forbidden(candidate.parts):
         raise ValueError("output path must stay under project_root")
+    if candidate.is_relative_to(config.paths.data_root.resolve()):
+        raise ValueError('outputs must not be written inside the source dataset')
     return candidate
 
 

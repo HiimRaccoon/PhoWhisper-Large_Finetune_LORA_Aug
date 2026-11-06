@@ -45,3 +45,9 @@ def test_missing_audio_is_reported_and_output_cannot_escape_project(local_config
     assert any(e.get('utterance_id')=='missing/current' for e in result.errors)
     with pytest.raises(ValueError):
         audit_train(local_config,local_config.paths.project_root.parent/'outside-output')
+
+
+def test_output_cannot_be_written_inside_source_dataset(local_config):
+    from asr.audit import audit_train
+    with pytest.raises(ValueError,match='dataset'):
+        audit_train(local_config,local_config.paths.data_root/'generated')
