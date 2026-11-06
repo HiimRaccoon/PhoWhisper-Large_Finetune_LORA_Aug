@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phowhisper-lora-asr"
+version = "0.1.0"
+description = "Locked PhoWhisper LoRA training and offline Train transcription"
+requires-python = ">=3.11,<3.12"
+dependencies = ["numpy==2.3.4", "PyYAML>=6,<7"]
+
+[project.optional-dependencies]
+train = ["torch==2.9.0", "transformers==4.57.1", "peft==0.17.1", "accelerate==1.10.1", "huggingface-hub==0.36.0"]
+test = ["pytest>=8,<10"]
+
+[project.scripts]
+asr = "asr.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not gpu and not snapshot and not linux' --basetemp=.cache/pytest"
+markers = ["gpu: requires allocated GPU and real snapshot", "snapshot: requires exact pretrained snapshot", "linux: requires actual POSIX filesystem or Bash"]

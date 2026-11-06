@@ -1,0 +1,72 @@
+model:
+  base: vinai/PhoWhisper-large
+  revision: b9136a44b5f2ca664bd0b8f74baecf1715f6eeeb
+  frozen_base: true
+  quantization: null
+  trust_remote_code: false
+
+data:
+  source_samples: 1545
+  expected_utterances: 5036
+  include_current: true
+  include_user_history: true
+  include_assistant: false
+  validation: false
+  deduplicate: false
+
+lora:
+  scope: encoder_decoder
+  rank: 8
+  alpha: 16
+  dropout: 0.05
+  bias: none
+  modules_to_save: null
+
+training:
+  seed: 42
+  epochs: 10
+  micro_batch_size: 1
+  gradient_accumulation_steps: 16
+  optimizer: AdamW
+  learning_rate: 0.0001
+  betas: [0.9, 0.999]
+  epsilon: 1.0e-8
+  weight_decay: 0.01
+  scheduler: linear
+  warmup_ratio: 0.05
+  max_grad_norm: 1.0
+  gradient_checkpointing: true
+  use_cache: false
+  precision: auto
+  checkpoint_every_updates: 50
+  early_stopping: false
+
+augmentation:
+  policy: augmentation-v1
+  branch_probability: 0.5
+  speed_probability: 0.5
+  speed_factors: [0.9, 1.0, 1.1]
+  volume_probability: 0.5
+  gain_db: [-6.0, 6.0]
+  noise_probability: 0.5
+  snr_db: [15.0, 30.0]
+
+processor:
+  sample_rate: 16000
+  mel_bins: 80
+  language: vi
+  task: transcribe
+  predict_timestamps: false
+  max_label_tokens: 447
+
+inference:
+  offline: true
+  do_sample: false
+  language: vi
+  task: transcribe
+  num_beams: 1
+  max_new_tokens: 440
+
+export:
+  merge_adapter: true
+  dtype: float16
