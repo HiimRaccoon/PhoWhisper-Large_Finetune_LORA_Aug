@@ -41,7 +41,7 @@ def project_sources(train_jsonl: Path) -> list[UtteranceRow]:
     return rows
 
 
-def read_pcm16(path: Path) -> tuple[np.ndarray, dict]:
+def read_pcm16(path: Path, max_seconds: float | None = 30) -> tuple[np.ndarray, dict]:
     """Validate RIFF payload lengths before interpreting fixed-format PCM."""
     raw = Path(path).read_bytes()
     if len(raw) < 12 or raw[:4] != b'RIFF' or raw[8:12] != b'WAVE':
@@ -70,7 +70,7 @@ def read_pcm16(path: Path) -> tuple[np.ndarray, dict]:
     if fmt != (1, 1, 16000, 32000, 2, 16) or len(pcm) % 2:
         raise ValueError('audio format must be PCM mono 16-bit 16 kHz')
     frames = len(pcm) // 2
-    if not 0 < frames <= 480000:
+    if frames <= 0 or (max_seconds is not None and frames > 16000 * max_seconds):
         raise ValueError('audio duration must be >0 and <=30 seconds')
     audio = np.frombuffer(pcm, dtype='<i2').astype(np.float32) / 32768.0
     if not np.isfinite(audio).all():

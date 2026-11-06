@@ -54,11 +54,11 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Files:** `src/asr/{assets,processor}.py`, `tests/{test_assets,test_processor}.py`, `tests/gpu/test_snapshot_mask_forward.py`.  
 **Verify:** `pytest tests/test_assets.py tests/test_processor.py -m "not gpu and not snapshot" -q`; actual snapshot forward is deferred to T13.
 
-- [ ] T03.1 Verify the exact local snapshot with CPU hash/completeness/architecture/containment fixtures; record passing tests and snapshot identity without claiming real-snapshot readiness.
-- [ ] T03.2 Verify noise ordering, licensing/review/non-speech metadata, PCM format/power and hashes; record fixture results and ordered manifest identities.
-- [ ] T03.3 Implement explicit `return_attention_mask=True`, no-truncation 480,000-sample padding and features `[1, 80, 3000]` with integer frame mask `[1, 3000]`. CPU tests for lengths 16000/16001/480000 require mask sums 100/101/3000, mask semantics and preservation of the final input sample. Implement the separately marked actual-snapshot mask-forward test for T13.
-- [ ] T03.4 Verify unchanged label rules: NFC + trim, decoder-start handling, 447 accepted / 448 rejected, EOS retention and padding-only `-100` even with shared PAD/EOS IDs; record boundary assertions.
-- [ ] T03.5 Integrate asset/processor records and pass the CPU suite; record evidence and pending real-tokenizer/forward acceptance in T13 before committing when applicable.
+- [x] T03.1 Verify the exact local snapshot with CPU hash/completeness/architecture/containment fixtures; record passing tests and snapshot identity without claiming real-snapshot readiness.
+- [x] T03.2 Verify noise ordering, licensing/review/non-speech metadata, PCM format/power and hashes; record fixture results and ordered manifest identities.
+- [x] T03.3 Implement explicit `return_attention_mask=True`, no-truncation 480,000-sample padding and features `[1, 80, 3000]` with integer frame mask `[1, 3000]`. CPU tests for lengths 16000/16001/480000 require mask sums 100/101/3000, mask semantics and preservation of the final input sample. Implement the separately marked actual-snapshot mask-forward test for T13.
+- [x] T03.4 Verify unchanged label rules: NFC + trim, decoder-start handling, 447 accepted / 448 rejected, EOS retention and padding-only `-100` even with shared PAD/EOS IDs; record boundary assertions.
+- [x] T03.5 Integrate asset/processor records and pass the CPU suite; record evidence and pending real-tokenizer/forward acceptance in T13 before committing when applicable.
 
 ### T04 — Deterministic E4 augmentation
 
@@ -231,5 +231,6 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 |---|---|---|---|
 | T01 | complete | pytest tests/test_config.py tests/test_gitignore.py -q: 11 passed; RED config/ignore absence observed; real Git fixture passed; feasibility unavailable recorded | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T02 | complete | RED projection/audit/path modules absent; GREEN 10 task tests and full suite 21 passed, 1 Linux test deselected. Read-only actual Train audit: valid, 1545 sources, 5036 utterances, zero duplicate/conflict/errors; manifests/train/audit.json. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T03 | complete | RED asset/processor modules absent; GREEN 8 task tests; full portable suite 29 passed, 2 deselected. Real WhisperFeatureExtractor verifies 3000-frame masks at 16000/16001/480000 samples; label 447/448 and shared EOS/PAD covered. Real-snapshot GPU forward exists and is pending T13. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any
 
 SCHEMA_VERSION = 1
 
@@ -46,3 +47,40 @@ class AuditResult:
         result = asdict(self)
         result['schema_version'] = SCHEMA_VERSION
         return result
+
+
+@dataclass(frozen=True)
+class SnapshotIdentity:
+    path: Path
+    repository: str
+    revision: str
+    files: dict[str, str]
+    identity_hash: str
+
+
+@dataclass(frozen=True)
+class NoiseEntry:
+    path: Path
+    sha256: str
+    pcm_sha256: str
+    license: str
+    source_url: str
+    num_frames: int
+
+
+@dataclass(frozen=True)
+class NoiseManifest:
+    path: Path
+    sha256: str
+    entries: tuple[NoiseEntry, ...]
+
+
+@dataclass
+class PreparedExample:
+    input_features: Any
+    attention_mask: Any
+    labels: Any
+    utterance_id: str
+
+    def model_inputs(self) -> dict:
+        return {'input_features':self.input_features,'attention_mask':self.attention_mask,'labels':self.labels}
