@@ -77,11 +77,11 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Files:** `src/asr/{model,precision}.py`, `tests/{test_lora_targets,test_precision}.py`.  
 **Verify:** `pytest tests/test_lora_targets.py tests/test_precision.py -m "not gpu" -q`; real counts/kernel probes remain T13 evidence.
 
-- [ ] T05.1 Resolve the exact six module families; fixture tests reject missing/extra/out-of-scope targets and assert the expected set of 192 names.
-- [ ] T05.2 Build fresh seed-42 generic PEFT/Whisper initialization with only A/B trainable, exact locked LoRA settings and no warm start/quantization; record wrapper/scope fixture tests, with the actual 3,932,160 count pending UIT.
-- [ ] T05.3 Implement allocation-before-CUDA guards and the existing FP32 storage / BF16-or-FP16 autocast strategy; record mocked CPU profile tests and review T01.7's nonblocking feasibility record.
-- [ ] T05.4 Verify non-reentrant checkpointed encoder/decoder gradient flow and frozen base state on a tiny CPU fixture; initial zero A gradients are allowed, with A connectivity tested after B changes at nonzero LR.
-- [ ] T05.5 Integrate `TrainingBundle` and runtime metadata, pass all CPU tests and record the exact actual-GPU checks still pending T13; commit when applicable.
+- [x] T05.1 Resolve the exact six module families; fixture tests reject missing/extra/out-of-scope targets and assert the expected set of 192 names.
+- [x] T05.2 Build fresh seed-42 generic PEFT/Whisper initialization with only A/B trainable, exact locked LoRA settings and no warm start/quantization; record wrapper/scope fixture tests, with the actual 3,932,160 count pending UIT.
+- [x] T05.3 Implement allocation-before-CUDA guards and the existing FP32 storage / BF16-or-FP16 autocast strategy; record mocked CPU profile tests and review T01.7's nonblocking feasibility record.
+- [x] T05.4 Verify non-reentrant checkpointed encoder/decoder gradient flow and frozen base state on a tiny CPU fixture; initial zero A gradients are allowed, with A connectivity tested after B changes at nonzero LR.
+- [x] T05.5 Integrate `TrainingBundle` and runtime metadata, pass all CPU tests and record the exact actual-GPU checks still pending T13; commit when applicable.
 
 ### T06 — Training windows and scheduler
 
@@ -233,5 +233,6 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 | T02 | complete | RED projection/audit/path modules absent; GREEN 10 task tests and full suite 21 passed, 1 Linux test deselected. Read-only actual Train audit: valid, 1545 sources, 5036 utterances, zero duplicate/conflict/errors; manifests/train/audit.json. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T03 | complete | RED asset/processor modules absent; GREEN 8 task tests; full portable suite 29 passed, 2 deselected. Real WhisperFeatureExtractor verifies 3000-frame masks at 16000/16001/480000 samples; label 447/448 and shared EOS/PAD covered. Real-snapshot GPU forward exists and is pending T13. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T04 | complete | RED augmentation module absent; GREEN 9 deterministic/speed/volume/noise/fallback tests. Full suite 38 passed, 2 deselected. Golden seed and zero-waveform fixture independently derived; exact gate draw order tested through RNG boundary fixtures. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T05 | complete | RED model/precision modules absent; GREEN 7 task tests; full suite 45 passed, 2 deselected. Real tiny Whisper+PEFT forwards/backwards prove encoder/decoder gradients and frozen base; meta-device full topology proves 192 exact targets. Real H200 counts/kernel/memory remain pending T13. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.

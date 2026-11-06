@@ -1,7 +1,7 @@
 """Versioned records shared by pipeline stages; runtime tensors are never JSON fields."""
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -99,3 +99,14 @@ class AugmentationResult:
 
     def as_log(self) -> dict:
         return {k:v for k,v in vars(self).items() if k != 'audio'}
+
+
+@dataclass(frozen=True)
+class RuntimeProfile:
+    device: str = 'cpu'
+    compute_dtype: str = 'float32'
+    scaler_enabled: bool = False
+    probe: dict = field(default_factory=dict)
+
+    def as_dict(self) -> dict:
+        return asdict(self)
