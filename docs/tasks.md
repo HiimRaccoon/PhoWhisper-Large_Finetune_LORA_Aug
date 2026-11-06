@@ -2,7 +2,8 @@
 
 **Specification:** [specs.md](specs.md).  
 **Implementation plan:** [plan.md](plan.md).  
-**Status:** T01–T12 software implementation complete; G1.cpu passed. Actual Linux/UIT/GPU commissioning and official execution remain pending.  
+**Status:** T01–T12 software implementation complete; G1.cpu passed. Actual Linux/UIT/GPU commissioning and official execution remain pending.
+
 **Tracking rule:** this file owns completion status. Check an item only after its acceptance evidence exists; record commands, report paths/hashes and blockers in the execution record. A written test or a skipped GPU test is not a passing test.
 
 ## Scope and Execution Rules
