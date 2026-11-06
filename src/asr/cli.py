@@ -28,6 +28,9 @@ def _parser():
     smoke.add_argument('--run-id',required=True)
     smoke.add_argument('--cpu-report',type=Path,required=True)
     smoke.add_argument('--gpu-report',type=Path,required=True)
+    export=commands.add_parser('merge-export'); _common(export)
+    export.add_argument('--checkpoint',type=Path,required=True)
+    export.add_argument('--output',type=Path,required=True)
     for name in ['train','resume']:
         run=commands.add_parser(name); _common(run)
         run.add_argument('--run-id',required=True)
@@ -101,6 +104,11 @@ def main(argv=None):
             return 0 if result.passed else 1
         if args.command in {'train','resume'}:
             return _run_command(args,config)
+        if args.command=='merge-export':
+            from .export import export_final
+            result=export_final(config,args.checkpoint,args.output)
+            print(json.dumps({'valid':result.valid,'path':str(result.path)}))
+            return 0 if result.valid else 1
         if args.command=='smoke':
             from .audit import audit_train
             from .contracts import PreflightReport

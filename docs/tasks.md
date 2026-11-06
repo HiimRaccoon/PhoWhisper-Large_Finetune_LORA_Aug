@@ -135,11 +135,11 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Files:** `src/asr/{export,cli}.py`, `tests/test_export.py`, `tests/gpu/test_export_reload.py`.  
 **Verify:** `pytest tests/test_export.py -m "not gpu" -q`; actual final-model checks remain T14/G5.
 
-- [ ] T10.1 Accept both canonical terminal epoch 10 and fully completed last-index-9 representations only with `completed_epochs==10`, all 3,150 successful calls/50,360 micro-steps, zero pending accumulation and correct terminal adapter identity. Reject ordinary index-9 checkpoints, 3,149 calls, pending gradients, incomplete visits and falsely named final paths; save the acceptance matrix.
-- [ ] T10.2 Bind exact base/revision/run/adapter identities and reject existing/conflicting export destinations before merge; record failure diagnostics.
-- [ ] T10.3 Merge FP32 base/adapter in eval mode, export complete finite FP16 weights plus processor/tokenizer/generation/provenance, and pass tiny-model publication/metadata tests.
-- [ ] T10.4 Verify fresh-process local-only reload without PEFT and declared logit tolerances; record CPU mechanics and leave real final-model certification pending T14.
-- [ ] T10.5 Wire `merge-export` through terminal/identity validation before loading/publishing, pass CPU tests and record evidence/commit when applicable.
+- [x] T10.1 Accept both canonical terminal epoch 10 and fully completed last-index-9 representations only with `completed_epochs==10`, all 3,150 successful calls/50,360 micro-steps, zero pending accumulation and correct terminal adapter identity. Reject ordinary index-9 checkpoints, 3,149 calls, pending gradients, incomplete visits and falsely named final paths; save the acceptance matrix.
+- [x] T10.2 Bind exact base/revision/run/adapter identities and reject existing/conflicting export destinations before merge; record failure diagnostics.
+- [x] T10.3 Merge FP32 base/adapter in eval mode, export complete finite FP16 weights plus processor/tokenizer/generation/provenance, and pass tiny-model publication/metadata tests.
+- [x] T10.4 Verify fresh-process local-only reload without PEFT and declared logit tolerances; record CPU mechanics and leave real final-model certification pending T14.
+- [x] T10.5 Wire `merge-export` through terminal/identity validation before loading/publishing, pass CPU tests and record evidence/commit when applicable.
 
 ### T11 — Train inference and output validation
 
@@ -238,5 +238,6 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 | T07 | complete | RED checkpoint module absent; GREEN 5 checkpoint/resume tests. Full suite 64 passed, 2 deselected. Immutable atomic publication, rename interruption, writer exclusion, hashes, safe tensor-only state loading, RNG-last and optimizer/scheduler/cursor restore verified. Regression RED/GREEN also prevents outputs inside a local source-dataset root. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T08 | complete | RED artifacts/logging/preflight/loop/CLI seams absent; GREEN 10 task tests; full suite 74 passed, 2 deselected. Tiny-model 10-epoch traversal, combined interval/terminal events, mid-epoch resume, logging totals, stale evidence rejection and CLI GPU-allocation admission verified. Actual Linux/GPU checks pending. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T09 | complete | RED smoke harness/gradient evidence/CLI route; GREEN portable three-window 16,16,12 continuation test with real optimizer/RNG state, tiny Whisper gradient-evidence test, and allocation refusal. Full suite 78 passed, 3 deselected. Actual full-model GPU test exists and remains pending T13/G3; no passing GPU SmokeReport fabricated. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T10 | complete | RED missing export/CLI observed; GREEN 86 CPU tests, 4 hardware/Linux deselected. Terminal 3150/50360 guards and real tiny Whisper FP32 merge, FP16 fresh-process offline reload passed at atol=rtol=0.05. Final model remains T14/G5 pending. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.

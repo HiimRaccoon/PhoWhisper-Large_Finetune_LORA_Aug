@@ -195,3 +195,12 @@ class SmokeReport(ReportRecord):
     checks: list[dict]
     execution: str = 'unverified'
     metadata: dict = field(default_factory=dict)
+
+
+@dataclass
+class ExportResult(ReportRecord):
+    path: Path
+    valid: bool
+    identity: ArtifactIdentity
+    files: dict[str, str]
+    metadata: dict = field(default_factory=dict)
