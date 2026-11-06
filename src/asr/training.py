@@ -1,5 +1,5 @@
 """Explicit optimizer windows and truthful successful-call progress."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 import time
 import os
@@ -22,6 +22,7 @@ class WindowResult:
     optimizer_step_invoked: bool
     elapsed_seconds: float
     gpu_memory: dict
+    gradient_evidence: dict = field(default_factory=dict)
 
 
 def compute_budget(n: int) -> TrainingBudget:
@@ -51,7 +52,7 @@ def create_optimizer(bundle,config) -> torch.optim.AdamW:
                             weight_decay=t.weight_decay)
 
 
-def run_window(bundle,optimizer,scheduler,scaler,examples,progress) -> WindowResult:
+def run_window(bundle,optimizer,scheduler,scaler,examples,progress,collect_gradient_evidence=False) -> WindowResult:
     if not 1 <= len(examples) <= 16 or progress.pending_micro_steps or not 0 <= progress.epoch < 10:
         raise ValueError('invalid or pending accumulation window')
     profile = bundle.runtime
@@ -86,6 +87,15 @@ def run_window(bundle,optimizer,scheduler,scaler,examples,progress) -> WindowRes
         parameters = [p for group in optimizer.param_groups for p in group['params']]
         if any(p.grad is None or not torch.isfinite(p.grad).all() for p in parameters):
             raise FloatingPointError('non-finite or disconnected adapter gradients')
+        evidence = {}
+        if collect_gradient_evidence:
+            groups = set()
+            for name,parameter in bundle.model.named_parameters():
+                if parameter.requires_grad and parameter.grad is not None and parameter.grad.abs().sum().item() > 0:
+                    side = 'encoder' if 'encoder.layers.' in name else 'decoder' if 'decoder.layers.' in name else 'other'
+                    groups.add(side+('_lora_A' if 'lora_A' in name else '_lora_B'))
+            evidence = {'nonzero_groups':sorted(groups),'all_connected':True,'finite':True,
+                        'frozen_gradients':sum(p.grad is not None for p in bundle.model.parameters() if not p.requires_grad)}
         norm = torch.nn.utils.clip_grad_norm_(parameters,1.0,error_if_nonfinite=True)
         if scaler is not None:
             scaler.step(optimizer)
@@ -104,7 +114,7 @@ def run_window(bundle,optimizer,scheduler,scaler,examples,progress) -> WindowRes
                    'peak':torch.cuda.max_memory_allocated()} if profile.device == 'cuda'
                   else {'allocated':0,'reserved':0,'peak':0})
         return WindowResult(float(np.mean(raw_losses)),float(np.mean(raw_losses))/k,lr,float(norm),k,
-                            invoked,time.perf_counter()-start,memory)
+                            invoked,time.perf_counter()-start,memory,evidence)
     finally:
         hook.remove()
         optimizer.zero_grad(set_to_none=True)
@@ -216,6 +226,8 @@ def execute_run(config,run_dir,resume_from=None):
     smoke = SmokeReport.from_dict(read_json(run_dir/'preflight/smoke.json'))
     identity = check_admission(config,reports,smoke)
     manifest = read_json(run_dir/'run-manifest.json')
+    if manifest.get('mode') == 'smoke':
+        raise ValueError('smoke runs cannot be resumed as official training')
     if manifest['identity'] != identity.as_dict():
         raise ValueError('run identity changed')
     frozen_manifest = run_dir/'manifests/utterances.jsonl'

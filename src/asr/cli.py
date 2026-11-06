@@ -24,6 +24,10 @@ def _parser():
     preflight=commands.add_parser('preflight'); _common(preflight)
     preflight.add_argument('--stage',choices=['cpu','gpu'],required=True)
     preflight.add_argument('--output',type=Path,required=True)
+    smoke=commands.add_parser('smoke'); _common(smoke)
+    smoke.add_argument('--run-id',required=True)
+    smoke.add_argument('--cpu-report',type=Path,required=True)
+    smoke.add_argument('--gpu-report',type=Path,required=True)
     for name in ['train','resume']:
         run=commands.add_parser(name); _common(run)
         run.add_argument('--run-id',required=True)
@@ -53,6 +57,8 @@ def _run_command(args,config):
         run=project_path(config,config.paths.project_root/'runs'/args.run_id)
     else:
         run=None
+        if args.run_id.startswith('smoke-'):
+            raise ValueError('smoke- run IDs are reserved for smoke tests')
     files={name:getattr(args,name+'_report') or run/'preflight'/f'{name}.json' for name in ['cpu','gpu','smoke']}
     cpu=PreflightReport.from_dict(read_json(project_path(config,files['cpu'])))
     gpu=PreflightReport.from_dict(read_json(project_path(config,files['gpu'])))
@@ -95,6 +101,16 @@ def main(argv=None):
             return 0 if result.passed else 1
         if args.command in {'train','resume'}:
             return _run_command(args,config)
+        if args.command=='smoke':
+            from .audit import audit_train
+            from .contracts import PreflightReport
+            from .smoke import run_smoke
+            reports=[PreflightReport.from_dict(read_json(project_path(config,path)))
+                     for path in [args.cpu_report,args.gpu_report]]
+            audit=audit_train(config,config.paths.manifest_dir)
+            report=run_smoke(config,audit,reports,args.run_id)
+            print(json.dumps({'passed':report.passed,'report':str(config.paths.project_root/'runs'/args.run_id/'smoke-report.json')}))
+            return 0 if report.passed else 1
         raise ValueError('unsupported lifecycle command')
     except (OSError,ValueError,RuntimeError,ImportError) as exc:
         print(f'{type(exc).__name__}: {exc}',file=sys.stderr)

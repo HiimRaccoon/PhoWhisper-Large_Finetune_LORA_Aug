@@ -127,20 +127,20 @@ def _passed_checks(report,required):
     return report.passed is True and required.issubset({c.get('name') for c in report.checks if c.get('passed') is True}) and all(c.get('passed') is True for c in report.checks)
 
 
-def validate_evidence(expected,reports,smoke):
+def validate_preflight(expected,reports):
     if len(reports) != 2 or {r.stage for r in reports} != {'cpu','gpu'}:
         raise ValueError('matching CPU and GPU preflight reports are required')
     cpu = next(r for r in reports if r.stage=='cpu')
     gpu = next(r for r in reports if r.stage=='gpu')
     if not _passed_checks(cpu,CPU_CHECKS) or not _passed_checks(gpu,CPU_CHECKS|{'allocation','gpu_probe'}):
         raise ValueError('preflight checks have not all passed')
-    if cpu.identity is None or gpu.identity is None or smoke.identity is None:
+    if cpu.identity is None or gpu.identity is None:
         raise ValueError('missing evidence identity')
     shared = expected.as_dict(); shared.pop('runtime_hash')
     cpu_shared = cpu.identity.as_dict(); cpu_shared.pop('runtime_hash')
-    if cpu_shared != shared or gpu.identity != expected or smoke.identity != expected:
-        raise ValueError('preflight/smoke input identity mismatch')
-    if cpu.execution != 'cpu' or gpu.execution != 'slurm_gpu' or smoke.execution != 'slurm_gpu':
+    if cpu_shared != shared or gpu.identity != expected:
+        raise ValueError('preflight input identity mismatch')
+    if cpu.execution != 'cpu' or gpu.execution != 'slurm_gpu':
         raise ValueError('actual allocated-GPU evidence is required')
     if not gpu.runtime or gpu.runtime.device != 'cuda' or gpu.runtime.compute_dtype not in {'bfloat16','float16'}:
         raise ValueError('invalid verified GPU runtime')
@@ -149,6 +149,15 @@ def validate_evidence(expected,reports,smoke):
     metrics = gpu.runtime.probe.get('metrics',{})
     if metrics.get('targets') != 192 or metrics.get('trainable_parameters') != 3932160:
         raise ValueError('actual LoRA count evidence missing')
+    return gpu
+
+
+def validate_evidence(expected,reports,smoke):
+    gpu = validate_preflight(expected,reports)
+    if smoke.identity != expected:
+        raise ValueError('smoke input identity mismatch')
+    if smoke.execution != 'slurm_gpu':
+        raise ValueError('actual allocated-GPU smoke evidence is required')
     if not _passed_checks(smoke,SMOKE_CHECKS) or not smoke.fixture_ids:
         raise ValueError('full-model smoke checks have not passed')
     if smoke.runtime.compute_dtype != gpu.runtime.compute_dtype or smoke.runtime.scaler_enabled != gpu.runtime.scaler_enabled:

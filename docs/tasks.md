@@ -123,11 +123,11 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Depends on:** T01–T08. **Deliverable:** smoke harness and actual-model continuation report, separate from the official run.  
 **Verify:** `pytest tests/test_smoke.py -q`; later `pytest tests/gpu/test_full_model_smoke.py -m gpu -q` inside an allocation.
 
-- [ ] T09.1 Write harness and real-model tests comparing uninterrupted/resumed execution, frozen base state and adapter gradient connectivity.
-- [ ] T09.2 Confirm CPU harness tests fail; leave GPU execution pending until allocation exists.
-- [ ] T09.3 Implement isolated windows 16, 16, 12, checkpoint/resume, the 30-second/447-label shape probe and runtime/memory recording.
-- [ ] T09.4 Verify CPU tests and implement the GPU assertions for matching IDs/augmentation/LR/progress and adapter state within the declared tolerance; leave actual GPU execution to T13. No smoke weights may initialize official training.
-- [ ] T09.5 Record passing CPU evidence and the ready-to-run GPU test/harness; commit code when applicable. A passing actual-server `SmokeReport` remains pending T13/G3.
+- [x] T09.1 Write harness and real-model tests comparing uninterrupted/resumed execution, frozen base state and adapter gradient connectivity.
+- [x] T09.2 Confirm CPU harness tests fail; leave GPU execution pending until allocation exists.
+- [x] T09.3 Implement isolated windows 16, 16, 12, checkpoint/resume, the 30-second/447-label shape probe and runtime/memory recording.
+- [x] T09.4 Verify CPU tests and implement the GPU assertions for matching IDs/augmentation/LR/progress and adapter state within the declared tolerance; leave actual GPU execution to T13. No smoke weights may initialize official training.
+- [x] T09.5 Record passing CPU evidence and the ready-to-run GPU test/harness; commit code when applicable. A passing actual-server `SmokeReport` remains pending T13/G3.
 
 ### T10 — Final merge and FP16 export
 
@@ -237,5 +237,6 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 | T06 | complete | RED training/schedule modules absent; GREEN 13 task tests, full suite 58 passed, 2 deselected. Exact LR boundaries and resumed traces, 16/12 mean-loss gradients, LR-zero AdamW moments, real CPU GradScaler success, scaler-skip/nonfinite/OOM guards verified. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T07 | complete | RED checkpoint module absent; GREEN 5 checkpoint/resume tests. Full suite 64 passed, 2 deselected. Immutable atomic publication, rename interruption, writer exclusion, hashes, safe tensor-only state loading, RNG-last and optimizer/scheduler/cursor restore verified. Regression RED/GREEN also prevents outputs inside a local source-dataset root. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T08 | complete | RED artifacts/logging/preflight/loop/CLI seams absent; GREEN 10 task tests; full suite 74 passed, 2 deselected. Tiny-model 10-epoch traversal, combined interval/terminal events, mid-epoch resume, logging totals, stale evidence rejection and CLI GPU-allocation admission verified. Actual Linux/GPU checks pending. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T09 | complete | RED smoke harness/gradient evidence/CLI route; GREEN portable three-window 16,16,12 continuation test with real optimizer/RNG state, tiny Whisper gradient-evidence test, and allocation refusal. Full suite 78 passed, 3 deselected. Actual full-model GPU test exists and remains pending T13/G3; no passing GPU SmokeReport fabricated. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.
