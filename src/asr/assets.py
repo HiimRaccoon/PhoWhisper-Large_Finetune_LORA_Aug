@@ -23,6 +23,28 @@ def inventory_files(root: Path) -> dict[str, str]:
     return result
 
 
+def prepare_snapshot(config,download=None) -> SnapshotIdentity:
+    """Explicit online preparation, never called by training, export or inference."""
+    import os,uuid
+    from filelock import FileLock
+    from .paths import write_json_atomic
+    root=project_path(config,config.paths.snapshot)
+    if root.exists(): raise FileExistsError(root)
+    root.parent.mkdir(parents=True,exist_ok=True)
+    with FileLock(str(root.parent/'.snapshot-prepare.lock'),timeout=0):
+        if root.exists(): raise FileExistsError(root)
+        temporary=root.parent/f'.tmp-snapshot-{uuid.uuid4().hex}'
+        if download is None:
+            from huggingface_hub import snapshot_download
+            download=snapshot_download
+        download(repo_id=config.model.base,revision=config.model.revision,local_dir=str(temporary))
+        write_json_atomic(temporary/'.snapshot-origin.json',{'repository':config.model.base,
+                          'revision':config.model.revision,'files':inventory_files(temporary)})
+        verify_snapshot(config.with_paths(snapshot=temporary))
+        os.rename(temporary,root)
+    return verify_snapshot(config)
+
+
 def verify_snapshot(config) -> SnapshotIdentity:
     root = project_path(config, config.paths.snapshot)
     origin = read_json(root / '.snapshot-origin.json')

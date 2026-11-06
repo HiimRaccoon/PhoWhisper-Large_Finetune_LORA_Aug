@@ -75,11 +75,12 @@ def load_base(snapshot):
 
 
 def build_training_model(config, snapshot, runtime: RuntimeProfile) -> TrainingBundle:
-    from .precision import require_gpu_allocation
+    from .precision import require_gpu_allocation,inspect_allocated_gpu
     import os,socket
     if runtime.device != 'cuda':
         raise ValueError('official training requires allocated CUDA runtime')
     require_gpu_allocation(os.environ,socket.gethostname())
+    inspect_allocated_gpu()
     base = load_base(snapshot)
     if (base.config.encoder_layers,base.config.decoder_layers,base.config.d_model,base.config.num_mel_bins) != (32,32,1280,80):
         raise ValueError('official snapshot architecture mismatch')

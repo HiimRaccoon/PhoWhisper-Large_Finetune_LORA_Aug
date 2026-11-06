@@ -136,7 +136,7 @@ def transcribe_train(config,manifest,exported,output_dir) -> OutputValidation:
     from .export import load_export
     from .paths import project_path,audio_path
     from .data import read_pcm16
-    from .precision import require_gpu_allocation
+    from .precision import require_gpu_allocation,inspect_allocated_gpu
     from .preflight import load_audited_rows
     from .artifacts import set_status
     require_gpu_allocation(os.environ,socket.gethostname())
@@ -151,7 +151,7 @@ def transcribe_train(config,manifest,exported,output_dir) -> OutputValidation:
     if (record['identity']!=exported.identity.as_dict() or record['run_id']!=exported.metadata['provenance']['run_id']
             or record['status'] not in {'export_complete','transcripts_complete'} or output!=run/'transcripts'):
         raise ValueError('inference run/output identity mismatch')
-    if torch.cuda.device_count()!=1: raise RuntimeError('exactly one allocated CUDA device is required')
+    inspect_allocated_gpu()
     processor=WhisperProcessor.from_pretrained(str(exported.path),local_files_only=True,trust_remote_code=False)
     model=WhisperForConditionalGeneration.from_pretrained(str(exported.path),local_files_only=True,
                       trust_remote_code=False,torch_dtype=torch.float16).to('cuda').eval()

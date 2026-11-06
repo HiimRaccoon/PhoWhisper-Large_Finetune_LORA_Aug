@@ -24,7 +24,9 @@ def environment_metadata() -> dict:
         raise ValueError(f'candidate dependency/Python compatibility mismatch: {versions}')
     package = Path(__file__).resolve().parent
     code = {p.name:sha256_file(p) for p in sorted(package.glob('*.py'))}
-    return {'python':sys.version.split()[0],'platform':sys.platform,'versions':versions,'source_files':code}
+    distributions={d.metadata['Name'].lower().replace('_','-'):d.version for d in importlib.metadata.distributions()}
+    return {'python':sys.version.split()[0],'platform':sys.platform,'versions':versions,
+            'all_distributions':dict(sorted(distributions.items())),'source_files':code}
 
 
 def runtime_identity(runtime) -> str:

@@ -49,3 +49,21 @@ def test_noise_assets_can_exceed_thirty_seconds(local_config,make_wav):
            'license':'CC0-1.0','reviewed':True,'contains_speech':False,'source_url':'https://example.invalid/noise'}
     local_config.paths.noise_manifest.write_text(json.dumps([entry]),encoding='utf-8')
     assert verify_noise(local_config).entries[0].num_frames==496000
+
+
+def test_explicit_snapshot_preparation_pins_revision_and_never_overwrites(local_config):
+    from asr.assets import prepare_snapshot,verify_snapshot
+    # Replace only the external network boundary; the inventory and publication are real.
+    calls=[]
+    def download(**kwargs):
+        from dataclasses import replace
+        from pathlib import Path
+        calls.append(kwargs)
+        fixture=local_config.with_paths(snapshot=Path(kwargs['local_dir']))
+        snapshot_fixture(fixture)
+    result=prepare_snapshot(local_config,download)
+    assert result==verify_snapshot(local_config)
+    assert calls[0]['repo_id']=='vinai/PhoWhisper-large'
+    assert calls[0]['revision']=='b9136a44b5f2ca664bd0b8f74baecf1715f6eeeb'
+    with pytest.raises(FileExistsError): prepare_snapshot(local_config,download)
+    assert len(calls)==1

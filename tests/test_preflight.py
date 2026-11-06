@@ -27,3 +27,9 @@ def test_stale_identity_missing_reports_and_fake_gpu_evidence_are_rejected():
     with pytest.raises(ValueError,match='identity'):
         validate_evidence(expected,[cpu,gpu],replace(smoke,identity=replace(expected,manifest_hash='stale')))
     with pytest.raises(ValueError): validate_evidence(expected,[cpu,replace(gpu,execution='fixture')],smoke)
+def test_environment_manifest_covers_transitive_dependencies():
+    from asr.preflight import environment_metadata
+    metadata=environment_metadata()
+    assert metadata['all_distributions']['safetensors']
+    assert metadata['all_distributions']['tokenizers']
+    assert metadata['all_distributions']['torch'].startswith('2.9.0')

@@ -158,11 +158,11 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Depends on:** T01, T05, T07–T11 software readiness, not prior T13 access. **Deliverable:** configurable deployment scripts, correct signals and complete operational documentation.  
 **Verify:** portable fake-scheduler tests now; the per-file Bash syntax loop and `pytest tests/test_slurm_scripts.py tests/test_inference_resume.py tests/test_checkpoint.py -m linux -q` on WSL/Linux when available, or CPU-only T13.1. Record actual executed tests and hashes.
 
-- [ ] T12.1 Write fake-scheduler tests for required resources, argument quoting, logging, exit status, repeated job IDs and signal delivery.
-- [ ] T12.2 Confirm failing tests.
-- [ ] T12.3 Implement setup/submission wrappers and preflight/smoke/train/export/infer job scripts, with all generated paths under the project.
-- [ ] T12.4 Verify portable wrapper/resource/guard behavior and document all lifecycle/continuation commands. Execute actual Bash/POSIX signal/lock/publication checks on available WSL/Linux, or explicitly defer G1.linux to CPU-only T13.1; a Windows mock/skip is not Linux evidence.
-- [ ] T12.5 Record portable CPU evidence, real Linux results or their explicit deferral, and commit software when applicable; actual Linux verification remains mandatory before any GPU/official stage, and scripts never auto-submit official training.
+- [x] T12.1 Write fake-scheduler tests for required resources, argument quoting, logging, exit status, repeated job IDs and signal delivery.
+- [x] T12.2 Confirm failing tests.
+- [x] T12.3 Implement setup/submission wrappers and preflight/smoke/train/export/infer job scripts, with all generated paths under the project.
+- [x] T12.4 Verify portable wrapper/resource/guard behavior and document all lifecycle/continuation commands. Execute actual Bash/POSIX signal/lock/publication checks on available WSL/Linux, or explicitly defer G1.linux to CPU-only T13.1; a Windows mock/skip is not Linux evidence.
+- [x] T12.5 Record portable CPU evidence, real Linux results or their explicit deferral, and commit software when applicable; actual Linux verification remains mandatory before any GPU/official stage, and scripts never auto-submit official training.
 
 ### T13 — UIT commissioning
 
@@ -240,5 +240,6 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 | T09 | complete | RED smoke harness/gradient evidence/CLI route; GREEN portable three-window 16,16,12 continuation test with real optimizer/RNG state, tiny Whisper gradient-evidence test, and allocation refusal. Full suite 78 passed, 3 deselected. Actual full-model GPU test exists and remains pending T13/G3; no passing GPU SmokeReport fabricated. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T10 | complete | RED missing export/CLI observed; GREEN 86 CPU tests, 4 hardware/Linux deselected. Terminal 3150/50360 guards and real tiny Whisper FP32 merge, FP16 fresh-process offline reload passed at atol=rtol=0.05. Final model remains T14/G5 pending. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T11 | complete | RED output validation, generation, journal and CLI seams observed; GREEN portable suite 111 tests, hardware/Linux excluded. Original-index grouping; greedy prefix/EOS verified with real tiny Whisper; locked generation; journal identity/corruption/torn-tail/fsync interruption, writer exclusion and interrupted no-overwrite publication covered. Actual POSIX process/filesystem tests remain T13.1. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T12 | complete | RED scripts, explicit asset preparation, MIG inspection and transitive environment evidence observed; GREEN portable suite 121 passed, 7 hardware/Linux deselected. Git Bash syntax and fake sbatch/srun resource/path/exit/restart checks passed; real POSIX signal/kill/lock/journal/publication tests are implemented but NOT run on Windows. G1.cpu passes; G1.linux explicitly pending T13.1. README documents complete gated lifecycle and no automatic full training. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.

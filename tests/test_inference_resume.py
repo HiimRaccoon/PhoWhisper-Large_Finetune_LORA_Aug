@@ -118,3 +118,40 @@ def test_fsync_interruption_recovers_durable_line_once(tmp_path,monkeypatch):
         resumed.append(row.utterance_id); return predictions[rows.index(row)]
     assert transcribe_ordered(manifest,exported,output,predict,{}).valid
     assert resumed==['s1/history_002','s2/current']
+
+
+@pytest.mark.linux
+def test_posix_process_kill_releases_lock_and_recovers_fsynced_torn_tail(tmp_path):
+    import os,subprocess,sys,time
+    assert sys.platform.startswith('linux'),'G1.linux requires actual Linux'
+    from asr.inference import transcribe_ordered
+    rows,predictions,exported,manifest,output=journal_fixture(tmp_path)
+    root=Path(__file__).resolve().parents[1]
+    env=dict(os.environ,PYTHONPATH=os.pathsep.join([str(root/'src'),str(root/'tests')]))
+    code='''
+import os,sys,time
+from pathlib import Path
+from test_inference_resume import journal_fixture
+from asr.inference import transcribe_ordered
+rows,predictions,exported,manifest,output=journal_fixture(Path(sys.argv[1]))
+def predict(row):
+    if row==rows[1]:
+        with (output/'.inference-progress/results.partial.jsonl').open('ab') as stream:
+            stream.write(b'{"torn'); stream.flush(); os.fsync(stream.fileno())
+        (output/'ready').write_text('ready')
+        while True: time.sleep(.02)
+    return predictions[0]
+transcribe_ordered(manifest,exported,output,predict,{})
+'''
+    process=subprocess.Popen([sys.executable,'-c',code,str(tmp_path)],env=env)
+    try:
+        deadline=time.monotonic()+15
+        while not (output/'ready').exists() and time.monotonic()<deadline: time.sleep(.02)
+        assert (output/'ready').is_file()
+        process.kill(); process.wait(timeout=10)
+        seen=[]
+        def predict(row): seen.append(row.utterance_id); return predictions[rows.index(row)]
+        assert transcribe_ordered(manifest,exported,output,predict,{}).valid
+        assert seen==['s1/history_002','s2/current']
+    finally:
+        if process.poll() is None: process.kill(); process.wait()

@@ -3,6 +3,8 @@ from contextlib import nullcontext
 import gc
 import os
 import socket
+import re
+import subprocess
 
 import torch
 
@@ -15,6 +17,41 @@ def require_gpu_allocation(env, hostname: str) -> None:
         raise RuntimeError('GPU execution is forbidden on the login node')
     if not str(env.get('SLURM_JOB_ID','')).strip():
         raise RuntimeError('GPU execution requires a Slurm compute allocation')
+
+
+def verify_mig_listing(listing,selected_uuid):
+    parent=''
+    for line in listing.splitlines():
+        if line.startswith('GPU '): parent=line
+        match=re.search(r'MIG\s+(\S+)\s+Device\s+\d+:\s+\(UUID:\s*([^\)]+)\)',line)
+        if match and match[2].strip()==selected_uuid:
+            if 'H200' not in parent or match[1]!='2g.35gb':
+                raise RuntimeError('allocated device is not H200 MIG 2g.35gb')
+            return {'parent':parent,'profile':match[1],'uuid':selected_uuid}
+    raise RuntimeError('cannot match allocated MIG UUID in nvidia-smi inventory')
+
+
+def inspect_allocated_gpu():
+    require_gpu_allocation(os.environ,socket.gethostname())
+    if not torch.cuda.is_available() or torch.cuda.device_count()!=1:
+        raise RuntimeError('exactly one allocated CUDA/MIG device is required')
+    properties=torch.cuda.get_device_properties(0)
+    listing=subprocess.run(['nvidia-smi','-L'],capture_output=True,text=True,check=True).stdout
+    selected=str(getattr(properties,'uuid',''))
+    visible=os.environ.get('CUDA_VISIBLE_DEVICES','')
+    if visible.startswith('MIG-') and ',' not in visible: selected=visible
+    try:
+        result=verify_mig_listing(listing,selected)
+    except RuntimeError:
+        # Recent Torch may identify the MIG instance directly in its allocated-device name.
+        if not re.search(r'H200\s+MIG\s+2g\.35gb(?:\s|$)',properties.name): raise
+        result={'profile':'2g.35gb','allocated_device_name':properties.name}
+    if not 30*1024**3<=properties.total_memory<=40*1024**3:
+        raise RuntimeError('allocated MIG memory is inconsistent with the 35 GB profile')
+    result.update(total_bytes=properties.total_memory,inventory=listing,torch=torch.__version__,cuda=torch.version.cuda,
+        driver=subprocess.run(['nvidia-smi','--query-gpu=driver_version','--format=csv,noheader'],
+                              capture_output=True,text=True,check=True).stdout.strip())
+    return result
 
 
 def autocast_context(profile: RuntimeProfile):
@@ -39,9 +76,7 @@ def select_precision(bf16_supported: bool, probe) -> RuntimeProfile:
 
 
 def probe_runtime(config,snapshot) -> RuntimeProfile:
-    require_gpu_allocation(os.environ,socket.gethostname())
-    if not torch.cuda.is_available() or torch.cuda.device_count() != 1:
-        raise RuntimeError('exactly one allocated CUDA/MIG device is required')
+    allocation=inspect_allocated_gpu()
     from .model import initialize_adapter,load_base
     def probe(dtype):
         model = optimizer = scaler = output = None
@@ -70,7 +105,7 @@ def probe_runtime(config,snapshot) -> RuntimeProfile:
             else:
                 optimizer.step()
             torch.cuda.synchronize()
-            return {'gpu':torch.cuda.get_device_name(0),'total_bytes':torch.cuda.get_device_properties(0).total_memory,
+            return {'allocation':allocation,'gpu':torch.cuda.get_device_name(0),'total_bytes':torch.cuda.get_device_properties(0).total_memory,
                     'peak_bytes':torch.cuda.max_memory_allocated(),'reserved_bytes':torch.cuda.max_memory_reserved(),
                     'torch':torch.__version__,'cuda':torch.version.cuda,'targets':len(bundle.target_names),
                     'trainable_parameters':sum(p.numel() for p in parameters)}

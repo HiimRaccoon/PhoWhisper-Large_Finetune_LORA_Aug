@@ -85,6 +85,8 @@ def _run_command(args,config):
         write_json_atomic(run/'manifests/noise.json',asdict(noise))
         atomic_bytes(run/'manifests/noise-manifest.json',noise.path.read_bytes())
         write_json_atomic(run/'environment.json',environment)
+        atomic_bytes(run/'dependency-lock.txt',(''.join(f'{name}=={version}\n' for name,version in
+                     environment['all_distributions'].items())).encode('utf-8'))
         record=read_json(run/'run-manifest.json')
         record.update(runtime=gpu.runtime.as_dict(),budget=asdict(compute_budget(len(rows))),
                       model_revision=config.model.revision,lora_scope=config.lora.scope,seed=42)

@@ -75,3 +75,39 @@ def test_interruption_at_rename_never_publishes_staging_checkpoint(local_config,
     with pytest.raises(OSError,match='simulated'):
         save_checkpoint(run,'cut',state)
     assert discover_checkpoints(run)==[]
+
+
+@pytest.mark.linux
+def test_posix_kill_during_checkpoint_publication_releases_writer(local_config):
+    import os,subprocess,sys,time
+    from pathlib import Path
+    assert sys.platform.startswith('linux'),'G1.linux requires actual Linux'
+    from asr.checkpoint import save_checkpoint,discover_checkpoints,load_checkpoint
+    project=local_config.paths.project_root; root=Path(__file__).resolve().parents[1]
+    env=dict(os.environ,PYTHONPATH=os.pathsep.join([str(root/'src'),str(root/'tests')]))
+    code='''
+import os,sys,time
+from pathlib import Path
+from asr.config import load_config
+from asr.checkpoint import save_checkpoint
+from test_checkpoint import training_fixture
+project=Path(sys.argv[1]); config=load_config(Path(sys.argv[2])/'configs/official.yaml').with_paths(project_root=project,data_root=project/'dataset',snapshot=project/'assets/pretrained',noise_manifest=project/'assets/noise/manifest.json')
+_,state=training_fixture(config)
+def stop(*_):
+    (project/'ready').write_text('ready')
+    while True: time.sleep(.02)
+os.rename=stop
+save_checkpoint(project/'runs/r','cut',state)
+'''
+    process=subprocess.Popen([sys.executable,'-c',code,str(project),str(root)],env=env)
+    try:
+        deadline=time.monotonic()+15
+        while not (project/'ready').exists() and time.monotonic()<deadline: time.sleep(.02)
+        assert (project/'ready').is_file()
+        process.kill(); process.wait(timeout=10)
+        assert discover_checkpoints(project/'runs/r')==[]
+        _,state=training_fixture(local_config)
+        path=save_checkpoint(project/'runs/r','cut',state)
+        assert load_checkpoint(path,state.identity).progress.global_update==state.progress.global_update
+    finally:
+        if process.poll() is None: process.kill(); process.wait()
