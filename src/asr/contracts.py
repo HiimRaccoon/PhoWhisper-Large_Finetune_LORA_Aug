@@ -84,3 +84,18 @@ class PreparedExample:
 
     def model_inputs(self) -> dict:
         return {'input_features':self.input_features,'attention_mask':self.attention_mask,'labels':self.labels}
+
+
+@dataclass
+class AugmentationResult:
+    audio: Any
+    branch: str
+    decisions: dict
+    fallbacks: list[str]
+    utterance_id: str
+    epoch: int
+    seed: int
+    changed: bool
+
+    def as_log(self) -> dict:
+        return {k:v for k,v in vars(self).items() if k != 'audio'}

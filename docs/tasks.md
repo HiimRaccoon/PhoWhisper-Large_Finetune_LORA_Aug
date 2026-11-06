@@ -65,11 +65,11 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Depends on:** T02–T03. **Deliverable:** one deterministic waveform view per utterance/epoch, with complete decisions/fallback logs.  
 **Verify:** `pytest tests/test_augmentation.py -q`.
 
-- [ ] T04.1 Write independent seed/draw-trace fixtures and tests for all gates, speed/volume/noise transforms, noise wrapping, zero power and fallback boundaries.
-- [ ] T04.2 Confirm failing tests before implementation.
-- [ ] T04.3 Implement the exact SHA-256 seed, conditional draw order, interpolation convention, SNR formula and clean fallback behavior.
-- [ ] T04.4 Verify seed `18138155238159038922` for `42:0:train_0001/current:augmentation-v1`, replay waveform equality, unchanged references and no redrawing/dataset doubling.
-- [ ] T04.5 Record golden fixture provenance, NumPy/noise identities and passing evidence; commit when applicable.
+- [x] T04.1 Write independent seed/draw-trace fixtures and tests for all gates, speed/volume/noise transforms, noise wrapping, zero power and fallback boundaries.
+- [x] T04.2 Confirm failing tests before implementation.
+- [x] T04.3 Implement the exact SHA-256 seed, conditional draw order, interpolation convention, SNR formula and clean fallback behavior.
+- [x] T04.4 Verify seed `18138155238159038922` for `42:0:train_0001/current:augmentation-v1`, replay waveform equality, unchanged references and no redrawing/dataset doubling.
+- [x] T04.5 Record golden fixture provenance, NumPy/noise identities and passing evidence; commit when applicable.
 
 ### T05 — Exact LoRA and runtime precision
 
@@ -232,5 +232,6 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 | T01 | complete | pytest tests/test_config.py tests/test_gitignore.py -q: 11 passed; RED config/ignore absence observed; real Git fixture passed; feasibility unavailable recorded | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T02 | complete | RED projection/audit/path modules absent; GREEN 10 task tests and full suite 21 passed, 1 Linux test deselected. Read-only actual Train audit: valid, 1545 sources, 5036 utterances, zero duplicate/conflict/errors; manifests/train/audit.json. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T03 | complete | RED asset/processor modules absent; GREEN 8 task tests; full portable suite 29 passed, 2 deselected. Real WhisperFeatureExtractor verifies 3000-frame masks at 16000/16001/480000 samples; label 447/448 and shared EOS/PAD covered. Real-snapshot GPU forward exists and is pending T13. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T04 | complete | RED augmentation module absent; GREEN 9 deterministic/speed/volume/noise/fallback tests. Full suite 38 passed, 2 deselected. Golden seed and zero-waveform fixture independently derived; exact gate draw order tested through RNG boundary fixtures. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.

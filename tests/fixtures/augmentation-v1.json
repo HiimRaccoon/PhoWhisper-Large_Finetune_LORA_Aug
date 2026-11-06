@@ -1,0 +1,13 @@
+{
+  "seed_material": "42:0:train_0001/current:augmentation-v1",
+  "seed": 18138155238159038922,
+  "sha256": "ca395ccb16acb7fb9731987590b7e015fe7f9b47f9b47ade18e851dd682b3f31",
+  "numpy_version": "2.3.4",
+  "first_draw": 0.4370953191272573,
+  "zero_signal_case": {
+    "frames": 8,
+    "dtype": "float32",
+    "expected_sha256": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925",
+    "reference": "zero signal remains zero under finite gain/noise scaling; independently computed 32 zero bytes"
+  }
+}
