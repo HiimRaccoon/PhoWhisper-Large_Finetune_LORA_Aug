@@ -110,3 +110,27 @@ class RuntimeProfile:
 
     def as_dict(self) -> dict:
         return asdict(self)
+
+
+@dataclass(frozen=True)
+class TrainingBudget:
+    utterances_per_epoch: int
+    updates_per_epoch: int
+    total_updates: int
+    warmup_updates: int
+
+
+@dataclass
+class TrainingProgress:
+    epoch: int = 0
+    completed_epochs: int = 0
+    next_position: int = 0
+    global_micro_step: int = 0
+    global_update: int = 0
+    permutation_hash: str = ''
+    pending_micro_steps: int = 0
+    successful_updates_by_epoch: list[int] = field(default_factory=lambda:[0]*10)
+    utterances_completed_by_epoch: list[int] = field(default_factory=lambda:[0]*10)
+
+    def as_dict(self) -> dict:
+        return asdict(self)

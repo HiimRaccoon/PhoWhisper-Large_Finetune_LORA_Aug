@@ -89,11 +89,11 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Files:** `src/asr/{training,schedule}.py`, shared progress records, `tests/{test_accumulation,test_schedule,test_training_guards}.py`.  
 **Verify:** `pytest tests/test_accumulation.py tests/test_schedule.py tests/test_training_guards.py -q`.
 
-- [ ] T06.1 Verify 5,036 rows produce `315 / 3150 / 158` budget values, deterministic epoch permutations and 314 windows of 16 plus one of 12; record order/coverage evidence.
-- [ ] T06.2 Implement the documented zero-based successful-call LR timeline and round-trip scheduler/optimizer state. Test actual LR at `u=0,1,157,158,159,3149` and post-final state, plus uninterrupted/resumed remaining traces around warmup and the final call.
-- [ ] T06.3 Verify exact A/B-only AdamW settings and that finite non-skipped LR-0 calls advance moments/step counters and budget while leaving parameters unchanged. Successful/scaler-skipped calls can both return `None`; tests must distinguish actual invocation.
-- [ ] T06.4 Verify loss/k accumulation for windows 16 and 12, fixed scale within the window and unscale/clip/optimizer/scheduler order against per-utterance mean-loss references.
-- [ ] T06.5 Verify clean progress/terminal counters and hard failure on OOM/non-finite/scaler skips without scheduler/completed-progress advancement; save passing suite/traces and commit when applicable.
+- [x] T06.1 Verify 5,036 rows produce `315 / 3150 / 158` budget values, deterministic epoch permutations and 314 windows of 16 plus one of 12; record order/coverage evidence.
+- [x] T06.2 Implement the documented zero-based successful-call LR timeline and round-trip scheduler/optimizer state. Test actual LR at `u=0,1,157,158,159,3149` and post-final state, plus uninterrupted/resumed remaining traces around warmup and the final call.
+- [x] T06.3 Verify exact A/B-only AdamW settings and that finite non-skipped LR-0 calls advance moments/step counters and budget while leaving parameters unchanged. Successful/scaler-skipped calls can both return `None`; tests must distinguish actual invocation.
+- [x] T06.4 Verify loss/k accumulation for windows 16 and 12, fixed scale within the window and unscale/clip/optimizer/scheduler order against per-utterance mean-loss references.
+- [x] T06.5 Verify clean progress/terminal counters and hard failure on OOM/non-finite/scaler skips without scheduler/completed-progress advancement; save passing suite/traces and commit when applicable.
 
 ### T07 — Checkpoints and resume
 
@@ -234,5 +234,6 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 | T03 | complete | RED asset/processor modules absent; GREEN 8 task tests; full portable suite 29 passed, 2 deselected. Real WhisperFeatureExtractor verifies 3000-frame masks at 16000/16001/480000 samples; label 447/448 and shared EOS/PAD covered. Real-snapshot GPU forward exists and is pending T13. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T04 | complete | RED augmentation module absent; GREEN 9 deterministic/speed/volume/noise/fallback tests. Full suite 38 passed, 2 deselected. Golden seed and zero-waveform fixture independently derived; exact gate draw order tested through RNG boundary fixtures. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 | T05 | complete | RED model/precision modules absent; GREEN 7 task tests; full suite 45 passed, 2 deselected. Real tiny Whisper+PEFT forwards/backwards prove encoder/decoder gradients and frozen base; meta-device full topology proves 192 exact targets. Real H200 counts/kernel/memory remain pending T13. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T06 | complete | RED training/schedule modules absent; GREEN 13 task tests, full suite 58 passed, 2 deselected. Exact LR boundaries and resumed traces, 16/12 mean-loss gradients, LR-zero AdamW moments, real CPU GradScaler success, scaler-skip/nonfinite/OOM guards verified. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.
