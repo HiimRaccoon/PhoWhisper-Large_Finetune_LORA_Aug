@@ -206,7 +206,7 @@ def execute_run(config,run_dir,resume_from=None):
     import threading
     import uuid
     from filelock import FileLock
-    from .artifacts import start_attempt,set_status
+    from .artifacts import begin_attempt,set_status
     from .assets import verify_snapshot,verify_noise
     from .augmentation import augment
     from .checkpoint import TrainingObjects,load_checkpoint,restore_training,discover_checkpoints
@@ -238,9 +238,8 @@ def execute_run(config,run_dir,resume_from=None):
         if not resume_from.is_relative_to((run_dir/'checkpoints').resolve()):
             raise ValueError('resume checkpoint belongs to another run')
     runtime = next(r.runtime for r in reports if r.stage=='gpu')
-    with FileLock(str(run_dir/'.session.lock'),timeout=0):
-        attempt = start_attempt(run_dir)
-        set_status(run_dir,'running',latest_attempt=attempt)
+    with FileLock(str(run_dir/'.session.lock'),timeout=0) as session_lock:
+        attempt = begin_attempt(run_dir,session_lock)
         stop = threading.Event()
         old_handlers = {}
         for name in ['SIGTERM','SIGINT','SIGUSR1']:

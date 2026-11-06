@@ -33,3 +33,31 @@ def test_environment_manifest_covers_transitive_dependencies():
     assert metadata['all_distributions']['safetensors']
     assert metadata['all_distributions']['tokenizers']
     assert metadata['all_distributions']['torch'].startswith('2.9.0')
+
+
+def runtime_fixture(driver='570.00',uuid='MIG-first'):
+    from asr.contracts import RuntimeProfile
+    return RuntimeProfile('cuda','bfloat16',False,{'metrics':{'allocation':{
+         'driver':driver,'gpu_family':'H200','device_name':'NVIDIA H200 MIG 2g.35gb',
+         'profile':'2g.35gb','total_bytes':35*1024**3,'uuid':uuid},'targets':192,'trainable_parameters':3932160}})
+
+
+def test_runtime_fingerprint_binds_driver_family_profile_but_not_allocation_uuid():
+    import copy
+    from asr.preflight import runtime_identity
+    baseline=runtime_fixture()
+    assert runtime_identity(baseline)!=runtime_identity(runtime_fixture('580.00'))
+    assert runtime_identity(baseline)==runtime_identity(runtime_fixture(uuid='MIG-next-allocation'))
+    for key,value in [('gpu_family','H100'),('profile','1g.18gb'),('device_name','NVIDIA H100')]:
+        changed=copy.deepcopy(baseline)
+        changed.probe['metrics']['allocation'][key]=value
+        assert runtime_identity(baseline)!=runtime_identity(changed)
+
+
+def test_current_runtime_fingerprint_inspects_live_hardware_instead_of_old_report(monkeypatch):
+    from asr.preflight import current_runtime_identity,runtime_identity
+    from asr import precision
+    previous=runtime_fixture(); live=runtime_fixture('580.00')
+    monkeypatch.setattr(precision,'inspect_allocated_gpu',lambda:live.probe['metrics']['allocation'])
+    assert current_runtime_identity(previous)==runtime_identity(live)
+    assert current_runtime_identity(previous)!=runtime_identity(previous)

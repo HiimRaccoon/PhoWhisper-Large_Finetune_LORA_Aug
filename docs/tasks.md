@@ -2,7 +2,7 @@
 
 **Specification:** [specs.md](specs.md).  
 **Implementation plan:** [plan.md](plan.md).  
-**Status:** T01–T12 implementation in progress; actual UIT/GPU and official execution remain pending.  
+**Status:** T01–T12 software implementation complete; G1.cpu passed. Actual Linux/UIT/GPU commissioning and official execution remain pending.  
 **Tracking rule:** this file owns completion status. Check an item only after its acceptance evidence exists; record commands, report paths/hashes and blockers in the execution record. A written test or a skipped GPU test is not a passing test.
 
 ## Scope and Execution Rules
@@ -11,7 +11,7 @@ The final locked configuration in specification section 5 applies to every task.
 
 Keep source data read-only and external to the Ubuntu project. Never access `CS406/`. Do not use Public/Private Test, environment state, tool labels or assistant turns for ASR training. Preserve every duplicate occurrence, fail on conflicts, and never silently skip invalid rows.
 
-T01–T12 build and test software. T01.7 adds a nonblocking early feasibility record, not a new phase. T13 commissions the actual UIT environment and has a CPU-only entry for deferred Linux checks. T14 operates the official run only after matching preflight/smoke evidence and operator scheduling. This planning revision has performed none of those tasks.
+T01–T12 build and test software. T01.7 adds a nonblocking early feasibility record, not a new phase. T13 commissions the actual UIT environment and has a CPU-only entry for deferred Linux checks. T14 operates the official run only after matching preflight/smoke evidence and operator scheduling. Software implementation evidence is recorded below; no UIT commissioning or official training has been performed.
 
 For each implementation task, follow the plan's failing-test → minimal implementation → passing-test steps. Record evidence, then commit the verified task when executing within an existing Git workflow. Do not initialize a repository or submit jobs merely to satisfy this tracker.
 
@@ -243,3 +243,17 @@ Software completion below excludes actual Linux/snapshot/GPU acceptance unless s
 | T12 | complete | RED scripts, explicit asset preparation, MIG inspection and transitive environment evidence observed; GREEN portable suite 121 passed, 7 hardware/Linux deselected. Git Bash syntax and fake sbatch/srun resource/path/exit/restart checks passed; real POSIX signal/kill/lock/journal/publication tests are implemented but NOT run on Windows. G1.cpu passes; G1.linux explicitly pending T13.1. README documents complete gated lifecycle and no automatic full training. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
 T13, T14 and G1–G6 remain pending. No full training job has been submitted.
+
+### Final software verification — 2026-11-06
+
+- `python -m pytest tests -m "not gpu and not snapshot and not linux" -q`: **129 passed, 7 deselected**, 2 upstream framework warnings. G1.cpu passes; the seven excluded tests are actual Linux/snapshot/GPU checks, not passing substitutes.
+- Editable package installation and the `asr --help` console entry point passed. `uv pip check` confirmed all 32 installed local CPU packages compatible. This local environment is not a UIT CUDA lock.
+- `git diff --check` passed. The protected `docs/specs.md` and `ASR.md` SHA-256 values are unchanged. Git tracks no competition dataset, WAV, model weights or checkpoints.
+- One independent whole-branch review found three Important defects and no Critical/Minor findings. All three were reproduced with failing tests and fixed: spooled batch-script helper paths (five lifecycle stages); hard-termination recovery under the exclusive session lock, preserving attempts; and admission/export/inference bound to freshly inspected driver/GPU/profile identities while permitting equivalent allocation UUIDs. The final 129-test suite includes these regressions. No second review pass or full training was substituted for those tests.
+
+### Execution decisions and remaining evidence
+
+- Work stayed in the existing shared workspace on `impl/asr-t01-t12`, preserving prior planning edits. Isolation is by branch rather than a separate worktree; concurrent edits would share the same files.
+- Bookkeeping used PowerShell. Explicit Git Bash was discovered later and passed portable Bash/fake-scheduler checks; WSL was unavailable. Actual POSIX behavior therefore remains a G1.linux/T13.1 prerequisite.
+- The reviewer set aside actual UIT filesystem, Slurm signal delivery, MIG memory fit and full-snapshot numerics because they require T13. This scope boundary stands: those properties remain unverified, and GPU/official admission must await their real evidence.
+- The reviewer set aside official training completion and complete final-model/transcript artifacts because they require T14. This boundary stands: software readiness does not deliver a trained model or the 5,036/1,545 final outputs.

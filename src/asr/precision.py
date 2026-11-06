@@ -48,7 +48,8 @@ def inspect_allocated_gpu():
         result={'profile':'2g.35gb','allocated_device_name':properties.name}
     if not 30*1024**3<=properties.total_memory<=40*1024**3:
         raise RuntimeError('allocated MIG memory is inconsistent with the 35 GB profile')
-    result.update(total_bytes=properties.total_memory,inventory=listing,torch=torch.__version__,cuda=torch.version.cuda,
+    result.update(gpu_family='H200',device_name=properties.name,total_bytes=properties.total_memory,
+        inventory=listing,torch=torch.__version__,cuda=torch.version.cuda,
         driver=subprocess.run(['nvidia-smi','--query-gpu=driver_version','--format=csv,noheader'],
                               capture_output=True,text=True,check=True).stdout.strip())
     return result

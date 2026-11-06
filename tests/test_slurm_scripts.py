@@ -15,6 +15,7 @@ BASH=shutil.which('bash') if sys.platform!='win32' else 'C:/Program Files/Git/bi
 @pytest.fixture
 def scheduler(tmp_path):
     root=tmp_path/'project with spaces'; root.mkdir()
+    shutil.copytree(ROOT/'scripts',root/'scripts')
     (root/'configs').mkdir(); (root/'configs/official.yaml').write_text('fixture')
     (root/'.venv/bin').mkdir(parents=True)
     fake=tmp_path/'fakebin'; fake.mkdir()
@@ -73,6 +74,22 @@ def test_runtime_rejects_missing_allocation(scheduler):
     root,env,captured=scheduler; env.pop('SLURM_JOB_ID',None)
     result=bash('infer.slurm',['--model','a'],env)
     assert result.returncode!=0 and 'SLURM_JOB_ID' in result.stderr and not captured.exists()
+
+
+@pytest.mark.parametrize('stage,command',[('train','train'),('preflight','preflight'),('smoke','smoke'),
+                                         ('export','merge-export'),('infer','infer-train')])
+def test_spooled_batch_script_uses_absolute_project_helpers(scheduler,tmp_path,stage,command):
+    # sbatch copies the script to SlurmdSpoolDir, without sibling include files.
+    root,env,captured=scheduler
+    spool=tmp_path/'slurmd-spool/job123'; spool.mkdir(parents=True)
+    spooled=spool/'slurm_script'; shutil.copyfile(ROOT/'scripts'/f'{stage}.slurm',spooled)
+    env['SLURM_JOB_ID']='123'
+    args=['train'] if stage=='train' else []
+    result=subprocess.run([BASH,spooled.as_posix(),*args,'--output','with spaces'],env=env,capture_output=True,text=True)
+    assert result.returncode==0,result.stderr
+    actual=json.loads(captured.read_text())
+    assert actual[actual.index('asr')+1]==command
+    assert actual[-2:]==['--output','with spaces']
 
 
 def test_bash_syntax_and_no_interpolated_sbatch_resources():

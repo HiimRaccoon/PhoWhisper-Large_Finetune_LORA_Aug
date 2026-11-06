@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source "$(dirname -- "${BASH_SOURCE[0]}")/job_common.sh"
+source "${ASR_PROJECT_ROOT:?Set ASR_PROJECT_ROOT}/scripts/job_common.sh"
 asr_job smoke "$@"

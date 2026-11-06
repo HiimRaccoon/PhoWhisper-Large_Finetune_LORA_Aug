@@ -29,15 +29,28 @@ def environment_metadata() -> dict:
             'all_distributions':dict(sorted(distributions.items())),'source_files':code}
 
 
-def runtime_identity(runtime) -> str:
+def runtime_identity(runtime,allocation=None) -> str:
     if runtime is None:
         return ''
     import torch
+    hardware=None
+    if runtime.device=='cuda':
+        allocation=allocation if allocation is not None else runtime.probe.get('metrics',{}).get('allocation',{})
+        required={'driver','gpu_family','device_name','profile','total_bytes'}
+        if not required.issubset(allocation): raise ValueError('verified GPU/driver identity is incomplete')
+        hardware={key:allocation[key] for key in required if key!='driver'}
+        hardware['driver_versions']=sorted(set(allocation['driver'].splitlines()))
     return canonical_hash({'device':runtime.device,'compute_dtype':runtime.compute_dtype,
           'scaler_enabled':runtime.scaler_enabled,'torch':str(torch.__version__),'cuda':torch.version.cuda,
+          'hardware':hardware,
           'deterministic_algorithms':torch.are_deterministic_algorithms_enabled(),
           'matmul_allow_tf32':torch.backends.cuda.matmul.allow_tf32,
           'cudnn_allow_tf32':torch.backends.cudnn.allow_tf32,'cudnn_benchmark':torch.backends.cudnn.benchmark})
+
+
+def current_runtime_identity(runtime):
+    from .precision import inspect_allocated_gpu
+    return runtime_identity(runtime,inspect_allocated_gpu() if runtime and runtime.device=='cuda' else None)
 
 
 def load_audited_rows(config,verify_audio=True):
@@ -65,7 +78,7 @@ def current_input_identity(config,runtime,verify_audio=True):
     snapshot,noise = verify_snapshot(config),verify_noise(config)
     environment = environment_metadata()
     identity = ArtifactIdentity(config.method_hash,audit['source_sha256'],audit['manifest_sha256'],
-                                snapshot.identity_hash,noise.sha256,runtime_identity(runtime),canonical_hash(environment))
+                                  snapshot.identity_hash,noise.sha256,current_runtime_identity(runtime),canonical_hash(environment))
     return identity,rows,snapshot,noise,environment
 
 

@@ -174,7 +174,8 @@ def export_final(config,checkpoint: Path,output_dir: Path) -> ExportResult:
         raise ValueError('final adapter scope mismatch')
     restore_adapter(bundle.model,state.adapter)
     provenance={'run_id':run.name,'checkpoint':str(checkpoint),'adapter_sha256':metadata['adapter_sha256'],
-                'base_revision':snapshot.revision,'target_names':bundle.target_names,'terminal_progress':state.progress.as_dict()}
+                'base_revision':snapshot.revision,'target_names':bundle.target_names,
+                'runtime':runtime.as_dict(),'terminal_progress':state.progress.as_dict()}
     result=merge_and_export(bundle.model,load_processor(snapshot),output,identity,provenance)
     set_status(run,'export_complete',export=str(output),export_manifest_sha256=sha256_file(output/'export-manifest.json'))
     return result

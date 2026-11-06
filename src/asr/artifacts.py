@@ -41,6 +41,27 @@ def start_attempt(run_dir):
     return attempt
 
 
+def begin_attempt(run_dir,session_lock):
+    """Recover hard termination only after obtaining the OS-owned run session lock."""
+    from pathlib import Path
+    if (not session_lock.is_locked or Path(session_lock.lock_file).resolve()!=(run_dir/'.session.lock').resolve()):
+        raise RuntimeError('exclusive run session lock is required to begin an attempt')
+    record=read_json(run_dir/'run-manifest.json')
+    if record['status'] not in {'created','preflight_passed','interrupted','failed','running'}:
+        raise ValueError(f"cannot start training from {record['status']}")
+    recovered=None
+    if record['status']=='running':
+        recovered=record.get('latest_attempt')
+        set_status(run_dir,'interrupted',recovered_attempt=recovered,recovery_reason='previous session ended without a status update')
+    attempt=start_attempt(run_dir)
+    if record['status']=='running':
+        metadata=read_json(run_dir/'attempts'/attempt/'attempt.json')
+        metadata.update(recovered_attempt=recovered,previous_status='running')
+        write_json_atomic(run_dir/'attempts'/attempt/'attempt.json',metadata)
+    set_status(run_dir,'running',latest_attempt=attempt)
+    return attempt
+
+
 def set_status(run_dir,status,**details):
     path = run_dir/'run-manifest.json'
     record = read_json(path)

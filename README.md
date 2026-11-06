@@ -50,7 +50,9 @@ Setup installs candidate pins from `pyproject.toml` and writes
 After T13 confirms the exact stack, preserve `python -m pip freeze` as
 `requirements/uit-lock.txt` and retain it unchanged across attempts. Each run also
 records all installed distribution versions, source hashes and `dependency-lock.txt`.
-Changing code or dependencies invalidates prior admission evidence.
+Changing code, dependencies, driver, GPU family or MIG profile invalidates prior
+admission evidence. Equivalent allocations can have different device UUIDs/job IDs;
+these remain provenance and do not prevent a compatible resume.
 
 ## G1.cpu and actual Linux verification
 
@@ -165,7 +167,9 @@ Checkpoints preserve adapter, optimizer, scheduler, scaler, all RNG state,
 permutation/cursor and identities. They are immutable and published only at clean
 window boundaries every 50 updates, at epoch ends and at terminal completion.
 Incomplete staging directories cannot resume. Each allocation creates a fresh
-attempt UUID, even if Slurm reuses its job ID. Logs and augmentation decisions are
+attempt UUID, even if Slurm reuses its job ID. If a hard kill leaves the manifest
+in `running`, the next attempt records recovery only after acquiring the exclusive
+OS session lock. Logs and augmentation decisions are
 under `runs/<run>/attempts/<attempt>/logs/`; Slurm stdout/stderr are under `runs/slurm/`.
 
 `ASR_SIGNAL_SECONDS` must exceed the measured worst remaining accumulation window,

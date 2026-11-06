@@ -9,7 +9,7 @@ import torch
 from filelock import FileLock,Timeout
 
 from .config import canonical_hash
-from .contracts import UtteranceRow,OutputValidation
+from .contracts import UtteranceRow,OutputValidation,RuntimeProfile
 from .export import locked_generation
 from .outputs import model_identity,group_transcripts,validate_outputs,validate_prediction
 from .paths import read_json,read_jsonl,sha256_file,write_json_atomic,write_jsonl_atomic
@@ -136,8 +136,8 @@ def transcribe_train(config,manifest,exported,output_dir) -> OutputValidation:
     from .export import load_export
     from .paths import project_path,audio_path
     from .data import read_pcm16
-    from .precision import require_gpu_allocation,inspect_allocated_gpu
-    from .preflight import load_audited_rows
+    from .precision import require_gpu_allocation
+    from .preflight import load_audited_rows,current_runtime_identity
     from .artifacts import set_status
     require_gpu_allocation(os.environ,socket.gethostname())
     exported=load_export(project_path(config,exported.path))
@@ -151,7 +151,8 @@ def transcribe_train(config,manifest,exported,output_dir) -> OutputValidation:
     if (record['identity']!=exported.identity.as_dict() or record['run_id']!=exported.metadata['provenance']['run_id']
             or record['status'] not in {'export_complete','transcripts_complete'} or output!=run/'transcripts'):
         raise ValueError('inference run/output identity mismatch')
-    inspect_allocated_gpu()
+    if current_runtime_identity(RuntimeProfile(**exported.metadata['provenance']['runtime']))!=exported.identity.runtime_hash:
+        raise ValueError('inference GPU/driver identity changed since verified export')
     processor=WhisperProcessor.from_pretrained(str(exported.path),local_files_only=True,trust_remote_code=False)
     model=WhisperForConditionalGeneration.from_pretrained(str(exported.path),local_files_only=True,
                       trust_remote_code=False,torch_dtype=torch.float16).to('cuda').eval()
