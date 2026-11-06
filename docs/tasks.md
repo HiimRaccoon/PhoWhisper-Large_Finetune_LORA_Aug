@@ -2,7 +2,7 @@
 
 **Specification:** [specs.md](specs.md).  
 **Implementation plan:** [plan.md](plan.md).  
-**Status:** planning complete; all implementation and server-operation tasks below are not started.  
+**Status:** T01–T12 implementation in progress; actual UIT/GPU and official execution remain pending.  
 **Tracking rule:** this file owns completion status. Check an item only after its acceptance evidence exists; record commands, report paths/hashes and blockers in the execution record. A written test or a skipped GPU test is not a passing test.
 
 ## Scope and Execution Rules
@@ -42,11 +42,11 @@ Portable CPU evidence, actual Linux evidence, real-snapshot evidence and allocat
 **Depends on:** T01. **Deliverable:** read-only audit, stable utterance manifest, error and duplicate/conflict reports.  
 **Verify:** `pytest tests/test_projection.py tests/test_audio_audit.py tests/test_paths.py -q`.
 
-- [ ] T02.1 Write fixtures covering current/history index mapping, assistant exclusion, truncated/invalid WAVs, missing files, duplicate/conflicting PCM and symlink/path escapes.
-- [ ] T02.2 Confirm the new tests fail for the intended missing behavior.
-- [ ] T02.3 Implement safe resolution, PCM decoding/hashing, transcript normalization, source/utterance identity checks and audit outputs.
-- [ ] T02.4 Verify duplicate retention, conflict failure, original order/index preservation, zero dataset writes and no environment/label exports.
-- [ ] T02.5 Record passing evidence and commit when applicable.
+- [x] T02.1 Write fixtures covering current/history index mapping, assistant exclusion, truncated/invalid WAVs, missing files, duplicate/conflicting PCM and symlink/path escapes.
+- [x] T02.2 Confirm the new tests fail for the intended missing behavior.
+- [x] T02.3 Implement safe resolution, PCM decoding/hashing, transcript normalization, source/utterance identity checks and audit outputs.
+- [x] T02.4 Verify duplicate retention, conflict failure, original order/index preservation, zero dataset writes and no environment/label exports.
+- [x] T02.5 Record passing evidence and commit when applicable.
 
 ### T03 — Asset verification and processor
 
@@ -225,12 +225,11 @@ G1.cpu command: `pytest tests -m "not gpu and not snapshot and not linux" -q`. G
 
 ## Execution Record
 
-T01 software is implemented and verified locally; T02?T12 are in progress. UIT/GPU and official-run tasks remain pending. When work begins, append one row per verified task/attempt using:
+Software completion below excludes actual Linux/snapshot/GPU acceptance unless separately recorded.
 
-| Task or gate | Status | Environment / run / attempt | Command and evidence path/hash | Blocker or next action |
-|---|---|---|---|---|
-| T01–T14, G1–G6 | Not started | No execution environment or run created | No execution evidence yet | Implement in dependency order; preserve locked configuration |
+| Task | Status | Local evidence | Remaining operational evidence |
+|---|---|---|---|
+| T01 | complete | pytest tests/test_config.py tests/test_gitignore.py -q: 11 passed; RED config/ignore absence observed; real Git fixture passed; feasibility unavailable recorded | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
+| T02 | complete | RED projection/audit/path modules absent; GREEN 10 task tests and full suite 21 passed, 1 Linux test deselected. Read-only actual Train audit: valid, 1545 sources, 5036 utterances, zero duplicate/conflict/errors; manifests/train/audit.json. | T13 actual snapshot/GPU/Linux commissioning; T14 official execution |
 
-Allowed tracker statuses are `not_started`, `in_progress`, `blocked` and `complete`. Mark a task complete only when its own deliverable is verified. Software construction can be complete while the separate operational tasks T13/T14 remain pending; the overall system is not accepted until G6.
-
-| T01 | complete | Windows / project Python 3.11.18 | `pytest tests/test_config.py tests/test_gitignore.py -q` ? 11 passed; Git fixture excludes generated assets; actual tracked-path audit clean | UIT feasibility explicitly unknown in generated manifests/uit-feasibility.json |
+T13, T14 and G1–G6 remain pending. No full training job has been submitted.
