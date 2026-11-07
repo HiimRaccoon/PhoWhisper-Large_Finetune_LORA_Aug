@@ -31,6 +31,7 @@ def test_checkpoint_is_immutable_and_hash_corruption_fails(local_config):
     run=local_config.paths.project_root/'runs/r'
     path=save_checkpoint(run,'attempt1',state)
     loaded=load_checkpoint(path,identity_fixture())
+    assert loaded.metadata['optimizer_parameter_names'] == [['lora_A']]
     assert loaded.progress.global_update==1
     assert loaded.progress.next_position==16
     with pytest.raises(FileExistsError): save_checkpoint(run,'attempt1',state)

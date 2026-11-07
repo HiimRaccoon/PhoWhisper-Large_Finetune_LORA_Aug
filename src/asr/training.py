@@ -52,7 +52,8 @@ def create_optimizer(bundle,config) -> torch.optim.AdamW:
                             weight_decay=t.weight_decay)
 
 
-def run_window(bundle,optimizer,scheduler,scaler,examples,progress,collect_gradient_evidence=False) -> WindowResult:
+def run_window(bundle,optimizer,scheduler,scaler,examples,progress,collect_gradient_evidence=False,
+               before_step=None) -> WindowResult:
     if not 1 <= len(examples) <= 16 or progress.pending_micro_steps or not 0 <= progress.epoch < 10:
         raise ValueError('invalid or pending accumulation window')
     profile = bundle.runtime
@@ -63,6 +64,7 @@ def run_window(bundle,optimizer,scheduler,scaler,examples,progress,collect_gradi
     start = time.perf_counter()
     optimizer.zero_grad(set_to_none=True)
     raw_losses = []
+    micro_trace = []
     k = len(examples)
     lr = optimizer.param_groups[0]['lr']
     invoked = False
@@ -73,6 +75,9 @@ def run_window(bundle,optimizer,scheduler,scaler,examples,progress,collect_gradi
     try:
         bundle.model.train()
         for example in examples:
+            if before_step is not None:
+                from .checkpoint import rng_fingerprint
+                rng_before = rng_fingerprint(profile.device == 'cuda')
             inputs = {key:value.to(profile.device) for key,value in example.model_inputs().items()}
             with autocast_context(profile):
                 raw_loss = bundle.model(**inputs).loss
@@ -81,12 +86,21 @@ def run_window(bundle,optimizer,scheduler,scaler,examples,progress,collect_gradi
             raw_losses.append(float(raw_loss.detach()))
             loss = raw_loss/k
             (scaler.scale(loss) if scaler is not None else loss).backward()
+            if before_step is not None:
+                micro_trace.append({'utterance_id':example.utterance_id,'rng_before':rng_before,
+                                    'rng_after':rng_fingerprint(profile.device == 'cuda')})
             progress.pending_micro_steps += 1
         if scaler is not None:
             scaler.unscale_(optimizer)
         parameters = [p for group in optimizer.param_groups for p in group['params']]
         if any(p.grad is None or not torch.isfinite(p.grad).all() for p in parameters):
             raise FloatingPointError('non-finite or disconnected adapter gradients')
+        if before_step is not None:
+            # Observe unscaled accumulated gradients before clipping/AdamW. The
+            # callback must not draw randomness or mutate training objects.
+            before_step({'losses':torch.tensor(raw_losses),'lr':lr,'micro_steps':micro_trace,
+                         'gradients':{name:p.grad.detach().cpu().clone() for name,p in
+                                      bundle.model.named_parameters() if p.requires_grad}})
         evidence = {}
         if collect_gradient_evidence:
             groups = set()

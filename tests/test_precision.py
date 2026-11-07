@@ -22,6 +22,17 @@ def test_precision_probe_uses_bf16_then_fp16_without_hiding_oom():
     assert calls==['bfloat16','float16']
     def oom(dtype): raise torch.OutOfMemoryError('out of memory')
     with pytest.raises(torch.OutOfMemoryError): select_precision(True,oom)
+
+
+def test_deterministic_kernel_failure_cannot_trigger_fp16_fallback():
+    from asr.precision import select_precision
+    calls = []
+    def probe(dtype):
+        calls.append(dtype)
+        raise RuntimeError('operation does not have a deterministic implementation')
+    with pytest.raises(RuntimeError,match='deterministic'):
+        select_precision(True,probe)
+    assert calls == ['bfloat16']
 def test_allocated_mig_identity_must_match_selected_uuid_and_parent():
     from asr.precision import verify_mig_listing
     listing='GPU 0: NVIDIA H200 (UUID: GPU-parent)\n  MIG 2g.35gb Device 0: (UUID: MIG-right)\n  MIG 1g.18gb Device 1: (UUID: MIG-wrong)\nGPU 1: NVIDIA A100 (UUID: GPU-other)\n  MIG 2g.35gb Device 0: (UUID: MIG-other)\n'

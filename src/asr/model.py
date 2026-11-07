@@ -48,7 +48,7 @@ def initialize_adapter(base: torch.nn.Module, config, runtime=None) -> TrainingB
                          bias='none',modules_to_save=None,target_modules=names,task_type=None)
     model = get_peft_model(base,adapter)
     model.config.use_cache = False
-    model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant':False})
+    model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant':False,'preserve_rng_state':True})
     trainable = [(n,p) for n,p in model.named_parameters() if p.requires_grad]
     if not trainable or any('lora_A' not in n and 'lora_B' not in n for n,_ in trainable):
         raise ValueError('only LoRA A/B may be trainable')

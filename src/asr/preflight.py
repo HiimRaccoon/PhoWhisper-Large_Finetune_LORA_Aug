@@ -44,6 +44,9 @@ def runtime_identity(runtime,allocation=None) -> str:
           'scaler_enabled':runtime.scaler_enabled,'torch':str(torch.__version__),'cuda':torch.version.cuda,
           'hardware':hardware,
           'deterministic_algorithms':torch.are_deterministic_algorithms_enabled(),
+          'deterministic_warn_only':torch.is_deterministic_algorithms_warn_only_enabled(),
+          'cublas_workspace_config':os.environ.get('CUBLAS_WORKSPACE_CONFIG'),
+          'cudnn_deterministic':torch.backends.cudnn.deterministic,
           'matmul_allow_tf32':torch.backends.cuda.matmul.allow_tf32,
           'cudnn_allow_tf32':torch.backends.cudnn.allow_tf32,'cudnn_benchmark':torch.backends.cudnn.benchmark})
 

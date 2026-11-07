@@ -11,6 +11,25 @@ import torch
 from .contracts import RuntimeProfile
 
 
+def configure_determinism() -> None:
+    """Apply before CUDA initialization, identically for probes, smoke and training.
+
+    Seeds alone do not control CUDA reduction/kernel selection. Keep the existing
+    compute dtype, TF32 policy and SDPA dispatch; unsupported deterministic kernels
+    must raise rather than silently run a different precision or warn and continue.
+    """
+    workspace = os.environ.get('CUBLAS_WORKSPACE_CONFIG')
+    if workspace not in (None, ':4096:8', ':16:8'):
+        raise RuntimeError('CUBLAS_WORKSPACE_CONFIG must be :4096:8 or :16:8')
+    if workspace is None:
+        if torch.cuda.is_initialized():
+            raise RuntimeError('set CUBLAS_WORKSPACE_CONFIG before CUDA initialization; restart the process')
+        os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
+    torch.use_deterministic_algorithms(True, warn_only=False)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+
+
 def require_gpu_allocation(env, hostname: str) -> None:
     host = (hostname or socket.gethostname()).lower().split('.')[0]
     if host.startswith('login'):
@@ -33,6 +52,7 @@ def verify_mig_listing(listing,selected_uuid):
 
 def inspect_allocated_gpu():
     require_gpu_allocation(os.environ,socket.gethostname())
+    configure_determinism()
     if not torch.cuda.is_available() or torch.cuda.device_count()!=1:
         raise RuntimeError('exactly one allocated CUDA/MIG device is required')
     properties=torch.cuda.get_device_properties(0)
@@ -70,7 +90,7 @@ def select_precision(bf16_supported: bool, probe) -> RuntimeProfile:
         except torch.OutOfMemoryError:
             raise
         except (RuntimeError,FloatingPointError) as exc:
-            if 'out of memory' in str(exc).lower():
+            if any(reason in str(exc).lower() for reason in ('out of memory','deterministic')):
                 raise
             failures.append({'dtype':dtype,'error':str(exc)})
     raise RuntimeError(f'GPU precision/kernel probes failed: {failures}')

@@ -101,6 +101,8 @@ def _run_command(args,config):
 def main(argv=None):
     args=_parser().parse_args(argv)
     try:
+        from .precision import configure_determinism
+        configure_determinism()
         config=_config(args)
         if args.command=='audit':
             from .audit import audit_train

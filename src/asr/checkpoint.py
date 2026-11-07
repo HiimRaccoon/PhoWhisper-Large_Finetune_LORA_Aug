@@ -58,6 +58,13 @@ def restore_rng(rng: dict) -> None:
         torch.cuda.set_rng_state_all(rng['cuda'])
 
 
+def rng_fingerprint(cuda=False) -> str:
+    state = capture_rng(cuda)
+    state['torch'] = state['torch'].tolist()
+    state['cuda'] = [value.tolist() for value in state['cuda']]
+    return canonical_hash(state)
+
+
 def adapter_state(model) -> dict:
     return {name:p.detach().cpu().clone().contiguous() for name,p in model.named_parameters() if p.requires_grad}
 
@@ -75,6 +82,16 @@ def restore_adapter(model,weights: dict) -> None:
             parameter.copy_(weights[name].to(parameter.device))
 
 
+def optimizer_parameter_names(objects) -> list[list[str]]:
+    """Bind positional optimizer IDs to model names, including same-shaped tensors."""
+    names = {id(p):name for name,p in objects.bundle.model.named_parameters() if p.requires_grad}
+    groups = [[names.get(id(p)) for p in group['params']] for group in objects.optimizer.param_groups]
+    flat = [name for group in groups for name in group]
+    if None in flat or len(flat) != len(set(flat)) or set(flat) != set(names.values()):
+        raise ValueError('optimizer parameters do not cover the trainable adapter exactly')
+    return groups
+
+
 def capture_training(objects,progress,identity,permutation,kind='regular',config=None) -> CheckpointState:
     if progress.pending_micro_steps or any(p.grad is not None for p in objects.bundle.model.parameters()):
         raise ValueError('cannot checkpoint pending accumulation or gradients')
@@ -84,6 +101,7 @@ def capture_training(objects,progress,identity,permutation,kind='regular',config
     adapter_config = peft['default'].to_dict() if 'default' in peft else {}
     adapter_config = json.loads(json.dumps(adapter_config,default=lambda v:sorted(v) if isinstance(v,set) else str(v)))
     metadata = {'kind':kind,'runtime':objects.bundle.runtime.as_dict(),'target_names':objects.bundle.target_names,
+                'optimizer_parameter_names':optimizer_parameter_names(objects),
                 'trainable_count':sum(p.numel() for p in objects.bundle.model.parameters() if p.requires_grad),
                 'lora_config':adapter_config,'resolved_config':config.resolved_dict() if config else {},
                 'pending_gradient_count':0,'created_at':datetime.now(timezone.utc).isoformat()}
@@ -164,6 +182,8 @@ def restore_training(state: CheckpointState,objects: TrainingObjects) -> Trainin
         raise ValueError('checkpoint runtime precision mismatch')
     if (state.scaler is None) != (objects.scaler is None):
         raise ValueError('checkpoint scaler profile mismatch')
+    if state.metadata.get('optimizer_parameter_names') != optimizer_parameter_names(objects):
+        raise ValueError('checkpoint optimizer parameter names/order mismatch or missing; create a new checkpoint')
     restore_adapter(objects.bundle.model,state.adapter)
     objects.optimizer.load_state_dict(state.optimizer)
     objects.scheduler.load_state_dict(state.scheduler)
